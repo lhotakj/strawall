@@ -1,0 +1,25 @@
+<canvas id="statsCanvas" width="600" height="60" style="z-index: 100; position: absolute; left:1280px; top:10px"></canvas>
+<script>
+    window.addEventListener('load', function () {
+    var canvasStats = document.getElementById('statsCanvas');
+    var contextStats = canvasStats.getContext('2d');
+
+    contextStats.imageSmoothingEnabled = true;
+
+    var centerXStats = canvasStats.width / 2;
+    var centerYStats = canvasStats.height / 2;
+
+    // Draw the center text
+    var textDescriptionTop = canvasStats.height * 0.48;
+    contextStats.fillStyle = '{{ widget_font_color }}';
+    contextStats.font = '30px Open Sans';
+    contextStats.textAlign = 'right';
+    contextStats.textBaseline = 'middle';
+    // Stroke
+    contextStats.strokeStyle = '{{ widget_font_color_stroke }}';
+    contextStats.lineWidth = 1;
+    contextStats.strokeText('total distance: 260km', centerXStats, textDescriptionTop);
+    contextStats.fillText('total distance: 260km', centerXStats, textDescriptionTop);
+
+});
+</script>
