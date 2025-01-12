@@ -1,5 +1,6 @@
+# Strava stats as a wallpaper
 
-Prerequsities
+## Prerequsities
 ```
 cd install
 sudo apt-get install xfonts-75dpi
