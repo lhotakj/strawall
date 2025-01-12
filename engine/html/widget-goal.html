@@ -30,14 +30,14 @@ window.addEventListener('load', function() {
     context.stroke();
 
     // Draw the center text
-    var textValueTop = canvas.height * 0.40;
+    var textValueTop = canvas.height * 0.365;
     context.fillStyle = '{{ widget_font_color }}';
-    context.font = '40px Open Sans';
+    context.font = '53px Open Sans';
     context.textAlign = 'center';
     context.textBaseline = 'middle';
     // Stroke
     context.strokeStyle = '{{ widget_font_color_stroke }}';
-    context.lineWidth = 1;
+    context.lineWidth = {{ widget_font_stroke_width }};
     context.strokeText(currentValue + '%', centerX, textValueTop);
     context.fillText(currentValue + '%', centerX, textValueTop);
 
@@ -45,12 +45,12 @@ window.addEventListener('load', function() {
     // Draw the center text
     var textDescriptionTop = canvas.height * 0.48;
     context.fillStyle = '{{ widget_font_color }}';
-    context.font = '20px Open Sans';
+    context.font = '25px Open Sans';
     context.textAlign = 'center';
     context.textBaseline = 'middle';
     // Stroke
     context.strokeStyle = '{{ widget_font_color_stroke }}';
-    context.lineWidth = 1;
+    context.lineWidth = {{ widget_font_stroke_width }};
     context.strokeText( 'yearly goal achieved', centerX, textDescriptionTop);
     context.fillText( 'yearly goal achieved', centerX, textDescriptionTop);
 

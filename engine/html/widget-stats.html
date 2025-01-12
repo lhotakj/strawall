@@ -1,4 +1,4 @@
-<canvas id="statsCanvas" width="600" height="60" style="z-index: 100; position: absolute; left:1280px; top:10px"></canvas>
+<canvas id="statsCanvas" width="900" height="120" style="z-index: 100; position: absolute; left:1390px; top:10px"></canvas>
 <script>
     window.addEventListener('load', function () {
     var canvasStats = document.getElementById('statsCanvas');
@@ -7,19 +7,30 @@
     contextStats.imageSmoothingEnabled = true;
 
     var centerXStats = canvasStats.width / 2;
-    var centerYStats = canvasStats.height / 2;
 
-    // Draw the center text
+    // Draw distance
     var textDescriptionTop = canvasStats.height * 0.48;
     contextStats.fillStyle = '{{ widget_font_color }}';
-    contextStats.font = '30px Open Sans';
+    contextStats.font = '40px Open Sans';
     contextStats.textAlign = 'right';
     contextStats.textBaseline = 'middle';
     // Stroke
     contextStats.strokeStyle = '{{ widget_font_color_stroke }}';
-    contextStats.lineWidth = 1;
+    contextStats.lineWidth = {{ widget_font_stroke_width }};
     contextStats.strokeText('total distance: 260km', centerXStats, textDescriptionTop);
     contextStats.fillText('total distance: 260km', centerXStats, textDescriptionTop);
+
+    // Draw elevation
+    var textElevationTop = canvasStats.height * 0.48 + 50;
+    contextStats.fillStyle = '{{ widget_font_color }}';
+    contextStats.font = '40px Open Sans';
+    contextStats.textAlign = 'right';
+    contextStats.textBaseline = 'middle';
+    // Stroke
+    contextStats.strokeStyle = '{{ widget_font_color_stroke }}';
+    contextStats.lineWidth = {{ widget_font_stroke_width }};
+    contextStats.strokeText('total elevation: 1330m', centerXStats, textElevationTop);
+    contextStats.fillText('total elevation: 1330m', centerXStats, textElevationTop);
 
 });
 </script>

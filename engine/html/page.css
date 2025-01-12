@@ -30,6 +30,8 @@ time, mark, audio, video {
   font-style: normal;
   font-variation-settings: "wdth" 100;
 
+    -webkit-font-smoothing: subpixel-antialiased;
+
 }
 /* HTML5 display-role reset for older browsers */
 article, aside, details, figcaption, figure,

@@ -209,12 +209,11 @@
     <link rel="stylesheet" href="./page.css">
     <title>Strava Stats</title>
 </head>
-<body style="max-width: 1920px; max-height: 1080px; overflow: hidden;">
+<body style="max-width: {{ canvas_width }}px; max-height: {{ canvas_height }}px; overflow: hidden;">
 
-    <canvas id="main" style="width: 1920px; height: 1080px; z-index: -1000; position: absolute; left:0; top:0; background-image: url(./background.jpg); background-size: cover;"></canvas>
+    <canvas id="main" style="width: {{ canvas_width }}px; height: {{ canvas_height }}px; z-index: -1000; position: absolute; left:0; top:0; background-image: url(./background.jpg); background-size: cover;"></canvas>
 
     <widget id="widget-goal.html"></widget>
-
     <widget id="widget-stats.html"></widget>
 
 </body>
