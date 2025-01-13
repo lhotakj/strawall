@@ -1,18 +1,40 @@
-FROM python:3.12-slim
+# Use the CentOS 8 image as the base image
+FROM centos:8
 
-# Install your system packages using dpkg or apt
-RUN apt-get update && apt-get install -y dpkg
+# Install EPEL repository and necessary dependencies
+RUN dnf install -y \
+    epel-release \
+    gcc \
+    wget \
+    curl \
+    make \
+    python3 \
+    python3-devel \
+    python3-pip \
+    wkhtmltopdf \
+    xorg-x11-server-Xvfb \
+    cairo \
+    pango \
+    gdk-pixbuf2 \
+    qt5-qtbase \
+    qt5-qtwebkit \
+    && dnf clean all
 
-# If you need to install a specific .deb file
-COPY install/wkhtmltox_0.12.6.1-2.jammy_amd64.deb /tmp/
-RUN dpkg -i /tmp/wkhtmltox_0.12.6.1-2.jammy_amd64.deb && rm /tmp/wkhtmltox_0.12.6.1-2.jammy_amd64.deb
+# Set the environment variable to non-interactive mode to avoid prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Install Python dependencies
-COPY requirements.txt /app/
-RUN pip install -r /app/requirements.txt
-
-# Copy your application code
-COPY . /app/
-
+# Set the working directory in the container to /app
 WORKDIR /app
-CMD ["python", "app.py"]
+
+# Copy your Flask app and requirements.txt into the container
+COPY ./ /app
+
+# Install Python dependencies from the requirements.txt
+RUN pip3 install --upgrade pip && \
+    pip3 install -r requirements.txt
+
+# Expose port 5000 to access the Flask app
+EXPOSE 5000
+
+# Set the entrypoint to run the Flask app
+CMD ["python3", "app.py"]
