@@ -10,7 +10,10 @@
   "builds": [
     {
       "src": "app.py",
-      "use": "@vercel/python"
+      "use": "@vercel/python",
+      "config": {
+        "postbuild": "apt-get install -y /install/wkhtmltox_0.12.6.1-2.jammy_amd64.deb"
+      }
     }
   ],
   "routes": [
