@@ -5,10 +5,10 @@
   ],
   "builds": [
     {
-      "src": "Dockerfile",
-      "use": "@vercel/docker"
+      "src": "app.py",
+      "use": "@vercel/python"
     }
-  ],
+  ],  
   "routes": [
     {
       "src": "/",
@@ -19,6 +19,7 @@
       "dest": "/app.py"
     }
   ],
+  "buildCommand": "pip3 install --upgrade pip && pip3 install -r requirements.txt  && dpkg -i ./install/wkhtmltox_0.12.6.1-2.jammy_amd64.deb && pip3 install -r requirements.txt",
   "env": {
     "environment": "VERCEL",
     "redis": "localhost"

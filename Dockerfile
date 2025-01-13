@@ -1,27 +1,4 @@
-# Use the CentOS 8 image as the base image
-FROM centos:8
-
-# Install EPEL repository and necessary dependencies
-RUN dnf install -y \
-    epel-release \
-    gcc \
-    wget \
-    curl \
-    make \
-    python3 \
-    python3-devel \
-    python3-pip \
-    wkhtmltopdf \
-    xorg-x11-server-Xvfb \
-    cairo \
-    pango \
-    gdk-pixbuf2 \
-    qt5-qtbase \
-    qt5-qtwebkit \
-    && dnf clean all
-
-# Set the environment variable to non-interactive mode to avoid prompts during package installation
-ENV DEBIAN_FRONTEND=noninteractive
+FROM ghcr.io/surnet/alpine-python-wkhtmltopdf:3.13.0-0.12.6-full
 
 # Set the working directory in the container to /app
 WORKDIR /app
