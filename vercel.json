@@ -3,17 +3,12 @@
   "regions": [
     "fra1"
   ],
-  "env": {
-    "environment": "VERCEL",
-    "redis": "localhost"
-  },  
   "builds": [
     {
       "src": "app.py",
       "use": "@vercel/python"
     }
   ],
-  "buildCommand": "dpkg -i ./install/wkhtmltox_0.12.6.1-2.jammy_amd64.deb && pip install -r requirements.txt",
   "routes": [
     {
       "src": "/",
@@ -23,6 +18,10 @@
       "src": "/stats.png",
       "dest": "/app.py"
     }
-  ]
+  ],
+  "buildCommand": "dpkg -i ./install/wkhtmltox_0.12.6.1-2.jammy_amd64.deb && pip install -r requirements.txt",
+  "env": {
+    "environment": "VERCEL",
+    "redis": "localhost"
+  }
 }
-
