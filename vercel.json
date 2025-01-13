@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "regions": [
+    "fra1"
+  ],
+  "env": {
+    "environment": "VERCEL",
+    "redis": "localhost"
+  },
+  "builds": [
+    {
+      "src": "index.py",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/index.py"
+    }
+  ]
+}
