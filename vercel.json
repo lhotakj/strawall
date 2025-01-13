@@ -10,13 +10,21 @@
   "builds": [
     {
       "src": "index.py",
+      "use": "@vercel/node",
+      "env": {
+        "INSTALL_DEB": "apt-get install -y /install/wkhtmltox_0.12.6.1-2.jammy_amd64.deb"
+      }
+    },    
+    {
+      "src": "index.py",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/index.py"
+      "dest": "/app.py"
     }
   ]
 }
+
