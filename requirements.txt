@@ -1,4 +1,5 @@
 weasyprint
-gunicorn>=20.1.0
-Flask>=2.2.3
-Werkzeug==3.0.1
+gunicorn>=22.0.0
+Flask>=2.3.2
+stravalib>=2.1
+mysql-connector-python

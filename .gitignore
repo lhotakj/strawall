@@ -2,3 +2,5 @@
 .idea/
 venv
 venv/
+.env-setup-local.sh
+__pycache__/
