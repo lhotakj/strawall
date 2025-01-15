@@ -1,4 +1,6 @@
 import os
+from datetime import datetime
+
 
 import mysql.connector
 from flask import Flask
@@ -70,7 +72,9 @@ class Database(interface_database.Database):
             cursor.close()
             self.cnx.close()
             if result:
-                return {"access_token": result[0], "refresh_token": result[1], "expires_at": result[2]}
+                self.app.logger.warning("returned: " + str(result))
+                self.app.logger.warning("returned[2]: " + str(result[2]))
+                return {"access_token": result[0], "refresh_token": result[1], "expires_at": str(result[2])}
             else:
                 self.app.logger.warning("No result.")
                 return None
@@ -84,7 +88,7 @@ class Database(interface_database.Database):
             cursor = self.cnx.cursor()
             cursor.execute(
                 "REPLACE INTO token_cache (athlete_id, access_token, refresh_token, expires_at) VALUES (%s, %s, %s, %s)",
-                (athlete_id, token_data['access_token'], token_data['refresh_token'], token_data['expires_at']))
+                (athlete_id, token_data['access_token'], token_data['refresh_token'], str(token_data['expires_at'])))
 
             self.cnx.commit()
             cursor.close()
@@ -98,15 +102,18 @@ class Database(interface_database.Database):
         if not self.connect(): return []
         try:
             cursor = self.cnx.cursor()
-            cursor.execute("SELECT activity_id, name, distance, moving_time, start_date FROM activities_cache WHERE athlete_id = %s", (athlete_id,))
+            cursor.execute("SELECT activity_id, athlete_id, name, distance, type, sport_type, moving_time, start_date FROM activities WHERE athlete_id = " + str(athlete_id) + "")
             activities = []
             for row in cursor.fetchall():
                 activities.append({
-                    "id": row[0],
-                    "name": row[1],
-                    "distance": row[2],
-                    "moving_time": row[3],
-                    "start_date": row[4],
+                    "activity_id": row[0],
+                    "athlete_id": row[1],
+                    "name": row[2],
+                    "distance": row[3],
+                    "type": row[4],
+                    "sport_type": row[5],
+                    "moving_time": row[6],
+                    "start_date": row[7],
                 })
             cursor.close()
             self.cnx.close()
@@ -114,3 +121,50 @@ class Database(interface_database.Database):
         except Exception as ex:
             self.app.logger.exception("Failed to load activities." + str(ex))
             return []
+
+    def save_activities_cache(self, athlete_id, activities):
+        if not self.connect(): return []
+        try:
+            cursor = self.cnx.cursor()
+            # cursor.execute("DELETE FROM activities WHERE athlete_id = " + str(athlete_id) + "" )
+            for activity in activities:
+                # self.app.logger.warning(activity)
+                cursor.execute(
+                    "INSERT INTO activities (activity_id, athlete_id, name, distance, type, sport_type, moving_time, start_date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+                    (activity['activity_id'],
+                     activity['athlete_id'],
+                     activity['name'],
+                     activity['distance'],
+                     activity['type'],
+                     activity['sport_type'],
+                     activity['moving_time'],
+                     activity['start_date'])
+                )
+            self.cnx.commit()
+            cursor.close()
+            self.cnx.close()
+            return activities
+        except Exception as ex:
+            self.app.logger.exception("Failed to save activities." + str(ex))
+            return []
+
+    def load_profile(self, athlete_id) -> dict | None:
+        if not self.connect(): return []
+        try:
+            cursor = self.cnx.cursor()
+            cursor.execute("SELECT ytd_ride, ytd_run, ytd_swim FROM athletes WHERE athlete_id = " + str(athlete_id) + "")
+            result = cursor.fetchone()
+            cursor.close()
+            self.cnx.close()
+            if result:
+                self.app.logger.warning("returned: " + str(result))
+                self.app.logger.warning("returned[2]: " + str(result[2]))
+                return {"ytd_ride": int(result[0]), "ytd_run": int(result[1]), "ytd_swim": int(result[2])}
+            else:
+                self.app.logger.warning("No result.")
+                return None
+
+        except Exception as ex:
+            self.app.logger.exception("Failed to load profile." + str(ex))
+            return []
+

@@ -21,7 +21,7 @@ window.addEventListener('load', function() {
     context.globalAlpha = 1.0;
 
     // Draw the gauge foreground
-    var currentValue = 15; // Change this value to update the gauge
+    var currentValue = {{ achieved }}; // Change this value to update the gauge
     var endAngle = Math.PI + (currentValue / 100) * Math.PI;
     context.beginPath();
     context.arc(centerX, centerY, radius, Math.PI, endAngle);
@@ -51,8 +51,8 @@ window.addEventListener('load', function() {
     // Stroke
     context.strokeStyle = '{{ widget_font_color_stroke }}';
     context.lineWidth = {{ widget_font_stroke_width }};
-    context.strokeText( 'yearly goal achieved', centerX, textDescriptionTop);
-    context.fillText( 'yearly goal achieved', centerX, textDescriptionTop);
+    context.strokeText( 'yearly {{ text }} goal achieved', centerX, textDescriptionTop);
+    context.fillText( 'yearly {{ text }} goal achieved', centerX, textDescriptionTop);
 
 });
 

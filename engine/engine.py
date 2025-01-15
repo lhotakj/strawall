@@ -16,6 +16,32 @@ class Engine:
     def __init__(self):
         pass
 
+    def widget_ytd_ride_data(self, athlete_id: int) -> dict:
+        return {"ytd_ride": 10000, "ytd_ride_totals": 239, "achieved": 2.3, "text": "ride"}
+
+    def load_widget_template(self, widget_type):
+        pwd: str = os.path.join(Path.cwd(), "engine", "html")
+        file: str = ""
+        html_data: str = ""
+        data = {}
+        if widget_type == "ytd_ride":
+            file = "widgets/ytd.html"
+            data = self.widget_ytd_ride_data(1)
+        if widget_type == "ride_stats":
+            file = "widget-stats.html"
+            data = {}
+        with open(pwd + "/" + file, "r") as f:
+            html_data: str = f.read()
+        for key, value in data.items():
+            html_data = html_data.replace('{{ ' + key + ' }}', str(value))
+        return html_data
+    # TODO next steps:
+    # - move widgets to widgets
+    # - parametrize location
+    # - finish source data (ytd, stats)
+    # - optimize token handling
+
+
     def render(self):
         # Define the path to the HTML files
         pwd: str = os.path.join(Path.cwd(), "engine", "html")
@@ -24,8 +50,7 @@ class Engine:
         with open(pwd + "/page.html", "r") as f:
             html_data: str = f.read()
 
-        with open(pwd + "/widget-goal.html", "r") as f:
-            widget_goal: str = f.read()
+        widget_goal = self.load_widget_template("ytd_ride")
 
         with open(pwd + "/widget-stats.html", "r") as f:
             widget_stats: str = f.read()

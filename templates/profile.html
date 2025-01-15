@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Athlete Stats</title>
+</head>
+<body>
+    <h1>Athlete Stats</h1>
+    <table border="1">
+        <tr>
+            <th>Name</th>
+            <td>{{ athlete.firstname }} {{ athlete.lastname }}</td>
+        </tr>
+        <tr>
+            <th>City</th>
+            <td>{{ athlete.city }}</td>
+        </tr>
+        <tr>
+            <th>State</th>
+            <td>{{ athlete.state }}</td>
+        </tr>
+        <tr>
+            <th>Country</th>
+            <td>{{ athlete.country }}</td>
+        </tr>
+        <tr>
+            <th>Year-to-date Ride Distance</th>
+            <td>
+                {{ athlete_stats.ytd_ride_totals.distance }} / {{ profile.ytd_ride }} meters
+                {% if profile.ytd_ride > 0 %}
+                    ({{ (athlete_stats.ytd_ride_totals.distance / profile.ytd_ride) * 100 | round(2) }}%)
+                {% else %}
+                    (-)
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>Year-to-date Run Distance</th>
+            <td>
+                {{ athlete_stats.ytd_run_totals.distance }} / {{ profile.ytd_run }} meters
+                {% if profile.ytd_run > 0 %}
+                    ({{ (athlete_stats.ytd_run_totals.distance / profile.ytd_run) * 100 | round(2) }}%)
+                {% else %}
+                    (-)
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>Year-to-date Swim Distance</th>
+            <td>
+                {{ athlete_stats.ytd_swim_totals.distance }} / {{ profile.ytd_swim }} meters
+                {% if profile.ytd_swim > 0 %}
+                    ({{ (athlete_stats.ytd_swim_totals.distance / profile.ytd_swim) * 100 | round(2) }}%)
+                {% else %}
+                    (-)
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

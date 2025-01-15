@@ -1,3 +1,4 @@
+from datetime import datetime
 
 from engine.engine import Engine
 from flask import Flask, redirect, url_for, render_template, request, session
@@ -47,7 +48,7 @@ def stats_image():
 
 def refresh_token(client, athlete_id):
     token_data = db.load_token(athlete_id)
-    if token_data and time.time() > token_data["expires_at"]:
+    if token_data and datetime.now() > datetime.fromtimestamp(int(token_data["expires_at"])):
         new_token_data = client.refresh_access_token(
             client_id=s.client_id,
             client_secret=s.client_secret,
@@ -107,6 +108,25 @@ def callback():
     session['athlete_id'] = athlete.id
     return redirect(url_for('activities'))
 
+@app.route('/profile')
+def profile():
+    athlete_id = session.get('athlete_id')
+    if not athlete_id:
+        return redirect(url_for('login'))
+
+    token_data = db.load_token(athlete_id)
+    client = Client()
+
+    if not token_data or datetime.now() > datetime.fromtimestamp(int(token_data["expires_at"])):
+        token_data = refresh_token(client, athlete_id)
+
+    client.access_token = token_data["access_token"]
+    athlete = client.get_athlete()
+    athlete_stats = client.get_athlete_stats(athlete.id)
+    profile = db.load_profile(athlete.id)
+    return render_template('profile.html', athlete_stats=athlete_stats, athlete=athlete, profile=profile)
+
+
 @app.route('/activities')
 def activities():
     athlete_id = session.get('athlete_id')
@@ -116,7 +136,7 @@ def activities():
     token_data = db.load_token(athlete_id)
     client = Client()
 
-    if not token_data or time.time() > token_data["expires_at"]:
+    if not token_data or datetime.now() > datetime.fromtimestamp(int(token_data["expires_at"])):
         token_data = refresh_token(client, athlete_id)
 
     client.access_token = token_data["access_token"]
@@ -129,17 +149,20 @@ def activities():
 
     for activity in client.get_activities(after=last_cached_time):
         new_activities.append({
-            "id": activity.id,
+            "activity_id": activity.id,
+            "athlete_id": activity.athlete.id,
             "name": activity.name,
             "distance": activity.distance,
-            "moving_time": activity.moving_time.total_seconds(),
+            "type": activity.type.root,
+            "sport_type": activity.sport_type.root,
+            "moving_time": activity.moving_time,
             "start_date": str(activity.start_date),
         })
 
     activities.extend(new_activities)
-    # save_activities_cache(athlete_id, activities)
+    # db.save_activities_cache(athlete_id, activities)
 
-    return render_template('activities.html', activities=activities)
+    return render_template('profile.html', activities=activities)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

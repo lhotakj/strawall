@@ -212,10 +212,10 @@
 <body style="max-width: {{ canvas_width }}px; max-height: {{ canvas_height }}px; overflow: hidden;">
 
     <canvas id="main" style="width: {{ canvas_width }}px; height: {{ canvas_height }}px; z-index: -1000; position: absolute; left:0; top:0; background-image: url(./background.jpg); background-size: cover;"></canvas>
-
-    <widget id="widget-goal.html"></widget>
-    <widget id="widget-stats.html"></widget>
-
+    <widgets>
+        <widget id="widget-goal.html"></widget>
+        <widget id="widget-stats.html"></widget>
+    </widgets>
 </body>
 </html>
 
