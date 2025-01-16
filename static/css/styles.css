@@ -1,14 +1,194 @@
+/* Import Exo 2 font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&display=swap');
+
+/* Basic Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Exo 2', sans-serif;
+}
+
+/* Body Style */
 body {
-    font-family: Arial, sans-serif;
-    text-align: center;
-    margin-top: 50px;
+    background-color: #f6f8fa;
 }
 
-a {
+/* Navbar */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background-color: #24292e;
+    color: #ffffff;
+}
+
+.navbar .logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: #ffffff;
     text-decoration: none;
-    color: blue;
 }
 
-a:hover {
+.navbar .nav-links a {
+    margin-left: 20px;
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 18px;
+}
+
+.navbar .nav-links a:hover {
     text-decoration: underline;
+}
+
+/* Container */
+.container {
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    margin-top: 20px;
+}
+
+/* Form */
+.form-container {
+    margin-bottom: 20px;
+}
+
+.form-container label {
+    display: block;
+    margin-bottom: 5px;
+    color: #24292e;
+}
+
+.form-container input[type="text"],
+.form-container input[type="password"],
+.form-container textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.form-container input[type="submit"] {
+    background-color: #24292e;
+    color: #ffffff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.form-container input[type="submit"]:hover {
+    background-color: #444c56;
+}
+
+/* Table */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.table th, .table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+.table th {
+    background-color: #24292e;
+    color: white;
+    text-align: left;
+}
+
+/* Hero Section */
+.hero {
+    text-align: center;
+    padding: 100px 20px;
+    background-color: #ffffff;
+}
+
+.hero h1 {
+    font-size: 48px;
+    margin-bottom: 20px;
+    color: #24292e;
+}
+
+.hero p {
+    font-size: 24px;
+    margin-bottom: 40px;
+    color: #24292e;
+}
+
+.hero .btn {
+    padding: 10px 20px;
+    font-size: 18px;
+    color: #ffffff;
+    background-color: #24292e;
+    text-decoration: none;
+    border-radius: 5px;
+}
+
+.hero .btn:hover {
+    background-color: #444c56;
+}
+
+/* Tabs */
+.tabs {
+    margin: 20px 0;
+}
+
+.tabs input[type="radio"] {
+    display: none;
+}
+
+.tabs ul {
+    list-style: none;
+    display: flex;
+    padding: 0;
+    margin: 0;
+    background: #24292e;
+    border-radius: 5px 5px 0 0;
+    overflow: hidden;
+}
+
+.tabs ul li {
+    flex-grow: 1;
+}
+
+.tabs ul li label {
+    display: block;
+    padding: 15px;
+    color: white;
+    text-align: center;
+    cursor: pointer;
+}
+
+.tabs .content section {
+    display: none;
+    padding: 20px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 0 0 5px 5px;
+}
+
+.tabs input[type="radio"]:checked + label + .content section {
+    display: block;
+}
+
+.tabs input[type="radio"]#tab1:checked ~ .content #content1,
+.tabs input[type="radio"]#tab2:checked ~ .content #content2 {
+    display: block;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 20px;
+    background-color: #24292e;
+    color: #ffffff;
+    position: fixed;
+    width: 100%;
+    bottom: 0;
 }

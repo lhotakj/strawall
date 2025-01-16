@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Dummy Page{% endblock %}
+
+{% block content %}
+    <section class="container">
+        <h2>Dummy Page</h2>
+
+        <!-- Login Form -->
+        <form action="/login" method="post" class="form-container">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+
+            <input type="submit" value="Login">
+        </form>
+
+        <!-- Textbox Form -->
+        <form action="/submit" method="post" class="form-container">
+            <label for="textbox">Your Text:</label>
+            <textarea id="textbox" name="textbox" rows="4" required></textarea>
+
+            <input type="submit" value="Submit">
+        </form>
+
+        <!-- Table -->
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Age</th>
+                    <th>City</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>John Doe</td>
+                    <td>30</td>
+                    <td>New York</td>
+                </tr>
+                <tr>
+                    <td>Jane Smith</td>
+                    <td>25</td>
+                    <td>Los Angeles</td>
+                </tr>
+                <tr>
+                    <td>Sam Johnson</td>
+                    <td>35</td>
+                    <td>Chicago</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <input type="radio" id="tab1" name="tab-control" checked>
+            <input type="radio" id="tab2" name="tab-control">
+            <ul>
+                <li title="Tab 1"><label for="tab1" role="button"><span>Tab 1</span></label></li>
+                <li title="Tab 2"><label for="tab2" role="button"><span>Tab 2</span></label></li>
+            </ul>
+            <div class="content">
+                <section id="content1">
+                    <h2>Tab 1 Content</h2>
+                    <p>Content for the first tab goes here.</p>
+                </section>
+                <section id="content2">
+                    <h2>Tab 2 Content</h2>
+                    <p>Content for the second tab goes here.</p>
+                </section>
+            </div>
+        </div>
+
+
+    </section>
+{% endblock %}

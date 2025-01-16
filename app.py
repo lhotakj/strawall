@@ -1,9 +1,9 @@
-from datetime import datetime
 
 from engine.engine import Engine
 from flask import Flask, redirect, url_for, render_template, request, session
 from stravalib.client import Client
 import time
+from datetime import datetime
 
 import helpers.mysql as database
 import helpers.strava as strava
@@ -14,9 +14,20 @@ app.secret_key = 'your_secret_key'  # Replace with a secure secret key
 db = database.Database(app)
 s = strava.Strava(app)
 
+@app.context_processor
+def inject_current_year():
+    return {'current_year': datetime.now().year}
 @app.route('/')
-def home():
+def main():
     return render_template('index.html', user='aaaa')
+
+@app.route('/dummy.html')
+def dummy():
+    return render_template('dummy.html')
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
 
 @app.route('/stats.png')
 def stats_image():
