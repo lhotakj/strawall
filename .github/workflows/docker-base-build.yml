@@ -1,0 +1,63 @@
+name: Docker Build and Cleanup
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - './Dockerfile.dockerbase'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Extract version number
+        id: vars
+        run: |
+          echo "VERSION=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/strawall_base:${{ env.VERSION }} -f ./Dockerfile.dockerbase .
+          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/strawall_base:${{ env.VERSION }} ${{ secrets.DOCKERHUB_USERNAME }}/strawall_base:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/strawall_base:${{ env.VERSION }}
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/strawall_base:latest
+
+      - name: Cleanup old Docker images
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+        run: |
+          echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+          IMAGE_NAME="${{ secrets.DOCKERHUB_USERNAME }}/strawall_base"
+          KEEP=5
+          IMAGES=$(curl -s -u $DOCKERHUB_USERNAME:$DOCKERHUB_PASSWORD "https://hub.docker.com/v2/repositories/$IMAGE_NAME/tags?page_size=100" | jq -r '.results|.[]|.name')
+          COUNT=0
+          for IMAGE in $IMAGES; do
+              if [[ $IMAGE != "latest" ]]; then
+                  COUNT=$((COUNT+1))
+                  if [[ $COUNT -gt $KEEP ]]; then
+                      docker rmi $IMAGE_NAME:$IMAGE
+                      curl -s -X DELETE -u $DOCKERHUB_USERNAME:$DOCKERHUB_PASSWORD "https://hub.docker.com/v2/repositories/$IMAGE_NAME/tags/$IMAGE/"
+                  fi
+              fi
+          done
+
+      - name: Display image paths
+        run: |
+          echo "Docker image paths:"
+          echo "Versioned: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/strawall_base:${{ env.VERSION }}"
+          echo "Latest: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/strawall_base:latest"
