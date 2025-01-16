@@ -1,10 +1,4 @@
-FROM python:3.13-alpine
-
-# Install wkhtmltopdf and its dependencies
-RUN apk update && \
-    apk add --no-cache \
-    wkhtmltopdf \
-    ttf-freefont
+FROM ghcr.io/surnet/alpine-python-wkhtmltopdf:3.13.0-0.12.6-full
 
 # Set the working directory in the container to /app
 WORKDIR /app
