@@ -1,14 +1,15 @@
-FROM ghcr.io/surnet/alpine-python-wkhtmltopdf:3.13.0-0.12.6-full
+FROM lhotakj/strawall_base:latest
+# Base it on the Dockerfile.basedocker publisher at https://hub.docker.com/repository/docker/lhotakj/strawall_base/tags
 
 # Set the working directory in the container to /app
 WORKDIR /app
 
-# Copy your Flask app and requirements.txt into the container
+# Copy the Flask app and requirements.txt into the container
 COPY ./ /app
 
 # Install Python dependencies from the requirements.txt
 RUN pip3 install --upgrade pip && \
-    pip3 install -r requirements.txt
+    pip3 install -r ./requirements.txt
 
 # Expose port 5000 to access the Flask app
 EXPOSE 5000
