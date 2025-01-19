@@ -102,7 +102,9 @@ class Database(interface_database.Database):
         if not self.connect(): return []
         try:
             cursor = self.cnx.cursor()
-            cursor.execute("SELECT activity_id, athlete_id, name, distance, type, sport_type, moving_time, start_date FROM activities WHERE athlete_id = " + str(athlete_id) + "")
+            self.app.logger.debug("RUNNING: ")
+            sql: str = "SELECT activity_id, athlete_id, name, distance, type, sport_type, moving_time, start_date FROM activities WHERE athlete_id = " + str(athlete_id) + ""
+            cursor.execute(sql)
             activities = []
             for row in cursor.fetchall():
                 activities.append({
@@ -159,6 +161,7 @@ class Database(interface_database.Database):
             if result:
                 self.app.logger.warning("returned: " + str(result))
                 self.app.logger.warning("returned[2]: " + str(result[2]))
+                self.app.logger.warning('loaded: ' + str(result))
                 return {"ytd_ride": int(result[0]), "ytd_run": int(result[1]), "ytd_swim": int(result[2])}
             else:
                 self.app.logger.warning("No result.")

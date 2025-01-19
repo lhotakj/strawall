@@ -3,6 +3,9 @@ import subprocess
 import os
 from pathlib import Path
 
+import helpers.mysql as database
+import helpers.strava as strava
+
 
 class Engine:
     WIDGET_FONT_COLOR: str = "#fb5200"
@@ -12,11 +15,17 @@ class Engine:
     CANVAS_WIDTH: int  = 1920
     CANVAS_HEIGHT: int = 1080
 
+    app: Flask
 
-    def __init__(self):
+
+    def __init__(self, app: Flask):
+        self.app = app
+        self.db = database.Database(app)
+        self.app.logger.warning(app.config.db)
         pass
 
     def widget_ytd_ride_data(self, athlete_id: int) -> dict:
+        # profile_info = db.load_profile(athlete_info.id)
         return {"ytd_ride": 10000, "ytd_ride_totals": 239, "achieved": 2.3, "text": "ride"}
 
     def load_widget_template(self, widget_type):
