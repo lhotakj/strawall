@@ -5,6 +5,7 @@ from flask import Flask
 
 class Database:
     log: Logger
+
     def __init__(self, app: Flask):
         self.logger = app.logger
         self.logger.debug("database")

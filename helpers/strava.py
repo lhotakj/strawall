@@ -1,14 +1,14 @@
 import os
-from datetime import datetime
 
-from flask import session, flash, Flask
+from flask import Flask
+
+
 # from stravalib import Client
 # from stravalib.model import Athlete
 # from stravalib.protocol import AccessInfo
 # from stravalib.strava_model import ActivityStats, SummaryActivity
 
 class Strava():
-
     client_id: int
     client_secret: str
     redirect_uri: str
@@ -23,8 +23,6 @@ class Strava():
         if not self.client_secret:
             application.logger.error("STRAVA_CLIENT_SECRET environment variable not set")
             return
-
-
 
 # def revalidate_strava_client(strava_client) -> Client:
 #     config = Configuration.Configuration()

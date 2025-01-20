@@ -1,6 +1,4 @@
 import os
-from datetime import datetime
-
 
 import mysql.connector
 from flask import Flask
@@ -66,8 +64,11 @@ class Database(interface_database.Database):
         if not self.connect(): return None
         try:
             cursor = self.cnx.cursor()
-            self.app.logger.warning(f"SELECT access_token, refresh_token, expires_at FROM token_cache WHERE athlete_id = " + str(athlete_id) + "")
-            cursor.execute(f"SELECT access_token, refresh_token, expires_at FROM token_cache WHERE athlete_id = " + str(athlete_id) + "")
+            self.app.logger.warning(
+                f"SELECT access_token, refresh_token, expires_at FROM token_cache WHERE athlete_id = " + str(
+                    athlete_id) + "")
+            cursor.execute(f"SELECT access_token, refresh_token, expires_at FROM token_cache WHERE athlete_id = " + str(
+                athlete_id) + "")
             result = cursor.fetchone()
             cursor.close()
             self.cnx.close()
@@ -102,8 +103,9 @@ class Database(interface_database.Database):
         if not self.connect(): return []
         try:
             cursor = self.cnx.cursor()
-            self.app.logger.debug("RUNNING: ")
-            sql: str = "SELECT activity_id, athlete_id, name, distance, type, sport_type, moving_time, start_date FROM activities WHERE athlete_id = " + str(athlete_id) + ""
+            sql: str = "SELECT activity_id, athlete_id, name, distance, type, sport_type, moving_time, start_date FROM activities WHERE athlete_id = " + str(
+                athlete_id) + ""
+            self.app.logger.warning("RUNNING: " + sql)
             cursor.execute(sql)
             activities = []
             for row in cursor.fetchall():
@@ -154,7 +156,8 @@ class Database(interface_database.Database):
         if not self.connect(): return []
         try:
             cursor = self.cnx.cursor()
-            cursor.execute("SELECT ytd_ride, ytd_run, ytd_swim FROM athletes WHERE athlete_id = " + str(athlete_id) + "")
+            cursor.execute(
+                "SELECT ytd_ride, ytd_run, ytd_swim FROM athletes WHERE athlete_id = " + str(athlete_id) + "")
             result = cursor.fetchone()
             cursor.close()
             self.cnx.close()
@@ -170,4 +173,3 @@ class Database(interface_database.Database):
         except Exception as ex:
             self.app.logger.exception("Failed to load profile." + str(ex))
             return []
-

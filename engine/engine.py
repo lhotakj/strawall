@@ -1,10 +1,10 @@
-from flask import Flask, Response
-import subprocess
 import os
+import subprocess
 from pathlib import Path
 
+from flask import Flask, Response
+
 import helpers.mysql as database
-import helpers.strava as strava
 
 
 class Engine:
@@ -12,11 +12,10 @@ class Engine:
     WIDGET_FONT_COLOR_STROKE: str = "none"
     WIDGET_FONT_STROKE_WIDTH: str = "0"
 
-    CANVAS_WIDTH: int  = 1920
+    CANVAS_WIDTH: int = 1920
     CANVAS_HEIGHT: int = 1080
 
     app: Flask
-
 
     def __init__(self, app: Flask):
         self.app = app
@@ -44,12 +43,12 @@ class Engine:
         for key, value in data.items():
             html_data = html_data.replace('{{ ' + key + ' }}', str(value))
         return html_data
+
     # TODO next steps:
     # - move widgets to widgets
     # - parametrize location
     # - finish source data (ytd, stats)
     # - optimize token handling
-
 
     def render(self):
         # Define the path to the HTML files
