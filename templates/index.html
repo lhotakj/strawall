@@ -7,9 +7,11 @@
 
         <a href="{{ url_for('stats_image') }}">View Stats Image</a><br>
 
-    {{ user }}
-    <a href="{{ url_for('login') }}">Login</a><br>
-    <a href="{{ url_for('profile') }}">Profile</a><br>
+        {{ user }}
+
+        <a href="{{ url_for('authorize_strava') }}">Authorize Strava</a><br>
+        <a href="{{ url_for('profile') }}">Profile</a><br>
+        <a href="{{ url_for('activities') }}">Activities</a><br>
 
     <form action="/login" method="post" class="form-container">
         <input type="submit" value="Login">
