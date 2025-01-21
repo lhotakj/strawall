@@ -1,4 +1,5 @@
 import os
+from typing import List
 
 import mysql.connector
 from flask import Flask
@@ -107,7 +108,7 @@ class Database(interface_database.Database):
                 athlete_id) + " ORDER BY start_date DESC"
             self.app.logger.warning("RUNNING: " + sql)
             cursor.execute(sql)
-            activities = []
+            activities: list = []
             for row in cursor.fetchall():
                 activities.append({
                     "activity_id": row[0],

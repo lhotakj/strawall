@@ -22,5 +22,4 @@ new ver
 ```
 
 TODO: next 
-- convert DB = start_date to a timestamp
 - filters on js

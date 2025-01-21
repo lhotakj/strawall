@@ -21,11 +21,55 @@
             { data: 'name' },
             { data: 'distance' },
             { data: 'moving_time' },
+            { data: 'sport_type' },
             { data: 'start_date' },
-        ]
+        ],
+        order: [[4, 'desc']] // Order by the start_date column (index 3) in desc
         });
+
+        var table = $('#example').DataTable()
+
+      //Take the category filter drop down and append it to the datatables_filter div.
+      //You can use this same idea to move the filter anywhere withing the datatable that you want.
+      $(".dt-length").append($("#sport-filter"));
+
+
+      //Use the built in datatables API to filter the existing rows by the Category column
+      $.fn.dataTable.ext.search.push(
+        function (settings, data, dataIndex) {
+          var selectedItem = $('#sportTypeFilter').val()
+          var category = data[3];
+          console.debug("'" + selectedItem + "' '" + category + "'")
+          if ((selectedItem === "") || (category === selectedItem)) {
+            return true;
+          }
+          return false;
+        }
+      );
+
+      //Set the change event for the Category Filter dropdown to redraw the datatable each time
+      //a user selects a new filter.
+      $("#sportTypeFilter").change(function (e) {
+        table.draw();
+      });
+
+      table.draw();
+
     });
 </script>
+
+
+<!-- Dropdown for filtering -->
+<span id="sport-filter" style="padding-left: 20px">
+    Filter by sport <select id="sportTypeFilter" class="form-select form-select-sm">
+        <option value="">All Sports</option>
+        <option value="Ride">Ride</option>
+        <option value="GravelRide">GravelRide</option>
+        <option value="Walk">Walk</option>
+        <option value="Hike">Hike</option>
+    </select>
+</span>
+
 
 <table id="example" class="display" style="width:100%">
         <thead>
@@ -33,6 +77,7 @@
                 <th>Name</th>
                 <th>Distance (m)</th>
                 <th>Moving Time (s)</th>
+                <th>Sport Type</th>
                 <th>Start Date</th>
             </tr>
         </thead>
@@ -41,6 +86,7 @@
                 <th>Name</th>
                 <th>Distance (m)</th>
                 <th>Moving Time (s)</th>
+                <th>Sport Type</th>
                 <th>Start Date</th>
             </tr>
         </tfoot>

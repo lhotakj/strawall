@@ -1,3 +1,5 @@
+from math import floor
+
 from fontTools.misc.cython import returns
 
 from engine.engine import Engine
@@ -88,7 +90,8 @@ def callback():
     app.config.db.save_token_cache(athlete.id, token_data)
     session['athlete_id'] = athlete.id
     app.config.session_athlete_id = athlete.id
-    return redirect(url_for('activities'))
+    refresh_activities()
+    return redirect(url_for('main'))
 
 @app.route('/profile')
 def profile():
@@ -100,17 +103,25 @@ def profile():
     return render_template('profile.html', athlete_stats=athlete_stats, athlete=athlete_info, profile=profile_info)
 
 
+# to be in popup
 def refresh_activities():
     auth_strava()
     cached_activities = app.config.db.load_activities_cache(app.config.session_athlete_id)
-    # Fetch new activities if needed
-    last_cached_time = max([a['start_date'] for a in cached_activities], default=None)
-    last_cached_time_date = datetime.fromisoformat(last_cached_time)
-    app.logger.warning("last:" + str(last_cached_time))
-    app.logger.warning("timestamp:" + str(last_cached_time))
-
     new_activities = []
-    for activity in app.config.client.get_activities(after=last_cached_time_date):
+    fresh_activities = []
+    if cached_activities == []:
+        app.logger.warning("cached_activities: NONE FOUND")
+        fresh_activities = app.config.client.get_activities()
+    else:
+        # Fetch new activities if needed
+        last_cached_timestamp: float = max([a['start_date'] for a in cached_activities], default=None)
+        app.logger.warning("last:" + str(last_cached_timestamp))
+        last_cached_time = datetime.fromtimestamp(float(last_cached_timestamp))
+        app.logger.warning("last:" + str(last_cached_time))
+        app.logger.warning("timestamp:" + str(last_cached_time))
+        fresh_activities = app.config.client.get_activities(after=last_cached_time)
+
+    for activity in fresh_activities:
         new_activities.append({
             "activity_id": activity.id,
             "athlete_id": activity.athlete.id,
@@ -119,11 +130,11 @@ def refresh_activities():
             "type": activity.type.root,
             "sport_type": activity.sport_type.root,
             "moving_time": activity.moving_time,
-            "start_date": str(activity.start_date),
+            "start_date": activity.start_date.timestamp(),
         })
     # app.logger.warning("loaded:" + str(new_activities))
     cached_activities.extend(new_activities)
-    cached_activities.sort(key=lambda x: x['start_date'], reverse=True)
+    cached_activities.sort(key=lambda x: float(x['start_date']), reverse=True)
     app.config.db.save_activities_cache(app.config.session_athlete_id, new_activities)
 
 
@@ -134,37 +145,15 @@ def activities_js():
 @app.route('/api/activities.json')
 def api_activities():
     auth_strava()
-    cached_activities = {"data": app.config.db.load_activities_cache(app.config.session_athlete_id)}
+    loaded_activities: list = app.config.db.load_activities_cache(app.config.session_athlete_id)
 
+    def convert_start_date(activity):
+        activity["start_date"] = datetime.fromtimestamp(float(activity["start_date"])).strftime('%Y-%m-%d %H:%M:%S')
+        return activity  # Use map to apply the conversion
+
+    loaded_activities = list(map(convert_start_date, loaded_activities))
+    cached_activities = {"data": loaded_activities}
     return cached_activities
-
-
-@app.route('/activities')
-def activities():
-    auth_strava()
-    cached_activities = app.config.db.load_activities_cache(app.config.session_athlete_id)
-    # Fetch new activities if needed
-    last_cached_time = max([a['start_date'] for a in cached_activities], default=None)
-    last_cached_time_date = datetime.fromisoformat(last_cached_time)
-    app.logger.warning("last:" + str(last_cached_time))
-    app.logger.warning("timestamp:" + str(last_cached_time))
-
-    new_activities = []
-    for activity in app.config.client.get_activities(after=last_cached_time_date):
-        new_activities.append({
-            "activity_id": activity.id,
-            "athlete_id": activity.athlete.id,
-            "name": activity.name,
-            "distance": activity.distance,
-            "type": activity.type.root,
-            "sport_type": activity.sport_type.root,
-            "moving_time": activity.moving_time,
-            "start_date": str(activity.start_date),
-        })
-    cached_activities.extend(new_activities)
-    cached_activities.sort(key=lambda x: x['start_date'], reverse=True)
-    app.config.db.save_activities_cache(app.config.session_athlete_id, new_activities)
-    return render_template('activities.html', activities=cached_activities)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
