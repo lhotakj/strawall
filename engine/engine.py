@@ -124,9 +124,6 @@ class Engine:
             self.app.config.logger.error(stderr_output)
             return self.serve_error("Error while processing: " + stderr_output)
 
-
-
-
         # Save the output to a variable
         png_output = result.stdout
 
