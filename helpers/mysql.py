@@ -1,5 +1,4 @@
 import os
-from typing import List
 
 import mysql.connector
 from flask import Flask
@@ -27,19 +26,19 @@ class Database(interface_database.Database):
         self.port = int(os.environ.get("MYSQL_PORT"))
         self.app = app
         if not self.database:
-            self.app.logger.error("MYSQL_DATABASE environment variable not set")
+            self.app.config.logger.error("MYSQL_DATABASE environment variable not set")
             return
         if not self.host:
-            self.app.logger.error("MYSQL_HOST environment variable not set")
+            self.app.config.logger.error("MYSQL_HOST environment variable not set")
             return
         if not self.port:
-            self.app.logger.error("MYSQL_PORT environment variable not set")
+            self.app.config.logger.error("MYSQL_PORT environment variable not set")
             return
         if not self.user:
-            self.app.logger.error("MYSQL_USER environment variable not set")
+            self.app.config.logger.error("MYSQL_USER environment variable not set")
             return
         if not self.password:
-            self.app.logger.error("MYSQL_PASSWORD environment variable not set")
+            self.app.config.logger.error("MYSQL_PASSWORD environment variable not set")
             return
 
     def connect(self) -> bool:
@@ -54,18 +53,18 @@ class Database(interface_database.Database):
             return True
         except mysql.connector.Error as err:
             if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-                self.app.logger.exception("Something is wrong with your user name or password")
+                self.app.config.logger.exception("Something is wrong with your user name or password")
             elif err.errno == errorcode.ER_BAD_DB_ERROR:
-                self.app.logger.exception("Database does not exist")
+                self.app.config.logger.exception("Database does not exist")
             else:
-                self.app.logger.exception(err)
+                self.app.config.logger.exception(err)
             return False
 
     def load_token(self, athlete_id: int) -> dict | None:
         if not self.connect(): return None
         try:
             cursor = self.cnx.cursor()
-            self.app.logger.warning(
+            self.app.config.logger.info(
                 f"SELECT access_token, refresh_token, expires_at FROM token_cache WHERE athlete_id = " + str(
                     athlete_id) + "")
             cursor.execute(f"SELECT access_token, refresh_token, expires_at FROM token_cache WHERE athlete_id = " + str(
@@ -74,14 +73,12 @@ class Database(interface_database.Database):
             cursor.close()
             self.cnx.close()
             if result:
-                self.app.logger.warning("returned: " + str(result))
-                self.app.logger.warning("returned[2]: " + str(result[2]))
                 return {"access_token": result[0], "refresh_token": result[1], "expires_at": str(result[2])}
             else:
-                self.app.logger.warning("No result.")
+                self.app.config.logger.error("No result.")
                 return None
         except Exception as ex:
-            self.app.logger.exception("Failed to load token." + str(ex))
+            self.app.config.logger.exception("Failed to load token." + str(ex))
             return None
 
     def save_token_cache(self, athlete_id, token_data) -> bool:
@@ -97,16 +94,16 @@ class Database(interface_database.Database):
             self.cnx.close()
             return True
         except Exception as ex:
-            self.app.logger.exception("Failed to save token." + str(ex))
+            self.app.config.logger.exception("Failed to save token." + str(ex))
             return False
 
     def load_activities_cache(self, athlete_id) -> list:
+        self.app.logger.info("loading info for athlete_id: " + str(athlete_id))
         if not self.connect(): return []
         try:
             cursor = self.cnx.cursor()
-            sql: str = "SELECT activity_id, athlete_id, name, distance, type, sport_type, moving_time, start_date FROM activities WHERE athlete_id = " + str(
-                athlete_id) + " ORDER BY start_date DESC"
-            self.app.logger.warning("RUNNING: " + sql)
+            sql: str = "SELECT activity_id, athlete_id, name, distance, type, sport_type, moving_time, start_date FROM activities WHERE athlete_id = " + str(athlete_id) + " ORDER BY start_date DESC"
+            self.app.config.logger.info("RUNNING: " + sql)
             cursor.execute(sql)
             activities: list = []
             for row in cursor.fetchall():
@@ -124,7 +121,7 @@ class Database(interface_database.Database):
             self.cnx.close()
             return activities
         except Exception as ex:
-            self.app.logger.exception("Failed to load activities." + str(ex))
+            self.app.config.logger.exception("Failed to load activities." + str(ex))
             return []
 
     def save_activities_cache(self, athlete_id, activities):
@@ -133,7 +130,7 @@ class Database(interface_database.Database):
             cursor = self.cnx.cursor()
             # cursor.execute("DELETE FROM activities WHERE athlete_id = " + str(athlete_id) + "" )
             for activity in activities:
-                # self.app.logger.warning(activity)
+                # self.app.config.logger.warning(activity)
                 cursor.execute(
                     "INSERT INTO activities (activity_id, athlete_id, name, distance, type, sport_type, moving_time, start_date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
                     (activity['activity_id'],
@@ -150,7 +147,7 @@ class Database(interface_database.Database):
             self.cnx.close()
             return activities
         except Exception as ex:
-            self.app.logger.exception("Failed to save activities." + str(ex))
+            self.app.config.logger.exception("Failed to save activities." + str(ex))
             return []
 
     def load_profile(self, athlete_id) -> dict | None:
@@ -163,14 +160,11 @@ class Database(interface_database.Database):
             cursor.close()
             self.cnx.close()
             if result:
-                self.app.logger.warning("returned: " + str(result))
-                self.app.logger.warning("returned[2]: " + str(result[2]))
-                self.app.logger.warning('loaded: ' + str(result))
                 return {"ytd_ride": int(result[0]), "ytd_run": int(result[1]), "ytd_swim": int(result[2])}
             else:
-                self.app.logger.warning("No result.")
+                self.app.config.logger.warning("No result.")
                 return None
 
         except Exception as ex:
-            self.app.logger.exception("Failed to load profile." + str(ex))
+            self.app.config.logger.exception("Failed to load profile." + str(ex))
             return []

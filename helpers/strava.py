@@ -18,10 +18,10 @@ class Strava():
         self.client_secret = os.environ.get("STRAVA_CLIENT_SECRET")
         self.redirect_uri = 'http://home:5000/callback'
         if not self.client_id:
-            application.logger.error("STRAVA_CLIENT_ID environment variable not set")
+            application.config.logger.error("STRAVA_CLIENT_ID environment variable not set")
             return
         if not self.client_secret:
-            application.logger.error("STRAVA_CLIENT_SECRET environment variable not set")
+            application.config.logger.error("STRAVA_CLIENT_SECRET environment variable not set")
             return
 
 # def revalidate_strava_client(strava_client) -> Client:

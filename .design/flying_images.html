@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Image Animation</title>
+    <style>
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .image {
+            position: absolute;
+            opacity: 0;
+            transition: opacity 2s, transform 2s;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="backgroundCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('backgroundCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Set a background image
+        const backgroundImage = new Image();
+        backgroundImage.src = 'images/background.png';  // Replace with your background image path
+        backgroundImage.onload = () => {
+            ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+        };
+
+        function getRandomImage() {
+            const randomIndex = Math.floor(Math.random() * 19) + 1;
+            return `images/image${randomIndex.toString().padStart(2, '0')}.png`;
+        }
+
+        function animateImage() {
+            const img = new Image();
+            img.src = getRandomImage();
+            img.classList.add('image');
+            document.body.appendChild(img);
+
+            img.onload = () => {
+                const randomX = Math.random() * (window.innerWidth - img.width);
+                const randomY = Math.random() * (window.innerHeight - img.height);
+                img.style.left = `${randomX}px`;
+                img.style.top = `${randomY}px`;
+
+                img.style.opacity = 0.3;
+
+                const randomScale = 0.8 + Math.random() * 2.0;
+                img.style.transform = `scale(${randomScale})`;
+
+                setTimeout(() => {
+                    img.style.opacity = 0;
+                    setTimeout(() => {
+                        document.body.removeChild(img);
+                    }, 1000 + Math.random() * 500);
+                }, 1500 + Math.random() * 1000);
+            };
+        }
+
+        function startAnimation() {
+            setInterval(() => {
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(animateImage, i * 500);
+                }
+            }, 5000);
+        }
+
+        startAnimation();
+    </script>
+</body>
+</html>
