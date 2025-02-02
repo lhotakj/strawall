@@ -121,6 +121,12 @@ def stats_image():
 
 @app.route('/authorize_strava')
 def authorize_strava():
+    """
+    Initiates Strava OAuth2 authorization flow by redirecting user to Strava login page.
+    Requests read access for user profile and activity data.
+    Returns:
+        Response: Redirect to Strava authorization URL
+    """
     auth_url = app.config.client.authorization_url(client_id=app.config.strava.client_id,
                                                    redirect_uri=app.config.strava.redirect_uri,
                                                    approval_prompt='auto',
@@ -131,6 +137,12 @@ def authorize_strava():
 
 @app.route('/callback')
 def callback():
+    """
+    Handles OAuth callback from Strava. Exchanges authorization code for access token,
+    stores token in database, and initiates activity refresh.
+    Returns:
+        Response: Redirect to original requested URL or main page
+    """
     next_url = session.pop('next_url', url_for('main'))
     code = request.args.get('code')
     token_data = app.config.client.exchange_code_for_token(client_id=app.config.strava.client_id,
@@ -146,6 +158,12 @@ def callback():
 @app.route('/profile')
 @auth_route
 def profile():
+    """
+    Displays user profile page with athlete information and stats.
+    Requires authentication via @auth_route decorator.
+    Returns:
+        Response: Rendered profile template with athlete data
+    """
     app.config.logger.info("profile()")
     athlete_info = app.config.client.get_athlete()
     app.config.logger.debug("profile / athlete: " + str(athlete_info))
