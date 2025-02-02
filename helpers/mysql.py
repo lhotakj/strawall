@@ -102,7 +102,8 @@ class Database(interface_database.Database):
         if not self.connect(): return []
         try:
             cursor = self.cnx.cursor()
-            sql: str = "SELECT activity_id, athlete_id, name, distance, type, sport_type, moving_time, start_date FROM activities WHERE athlete_id = " + str(athlete_id) + " ORDER BY start_date DESC"
+            sql: str = "SELECT activity_id, athlete_id, name, distance, type, sport_type, moving_time, start_date FROM activities WHERE athlete_id = " + str(
+                athlete_id) + " ORDER BY start_date DESC"
             self.app.config.logger.info("RUNNING: " + sql)
             cursor.execute(sql)
             activities: list = []

@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from functools import wraps
 
 import flask.wrappers
 from flask import Flask, redirect, url_for, render_template, request, session
@@ -20,8 +21,19 @@ app.config.strava = strava.Strava(app)
 app.config.client = Client()
 app.config.session_athlete_id = None
 app.config.session_access_token = None
-
 app.config.logger.info('== Start app ==')
+
+
+def auth_route(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        auth_result = auth_strava()
+        if isinstance(auth_result, flask.Response):
+            session['next_url'] = request.url
+            return auth_result
+        return f(*args, **kwargs)
+
+    return decorated_function
 
 
 def convert_token_data_to_datetime(token_data) -> datetime:
@@ -65,9 +77,12 @@ def auth_strava() -> flask.Response | bool:
     """
     app.config.session_athlete_id = session.get('athlete_id')
     if not app.config.session_athlete_id:
-        app.config.logger.warning("Not authorized! Login needed")
+        app.config.logger.warning("Not authorized (no athlete)! Login needed")
         return redirect(url_for('authorize_strava'))
     token_data = app.config.db.load_token(app.config.session_athlete_id)
+    if not token_data:
+        app.config.logger.warning("Not authorized (no token)! Login needed")
+        return redirect(url_for('authorize_strava'))
     app.config.session_access_token_expires = convert_token_data_to_datetime(token_data)
 
     if not token_data or datetime.now() > app.config.session_access_token_expires:
@@ -98,9 +113,8 @@ def page_not_found(e):
 
 
 @app.route('/stats.png')
-# @auth
+@auth_route
 def stats_image():
-    auth_strava()
     engine = Engine(app)
     return engine.render()
 
@@ -130,9 +144,9 @@ def callback():
 
 
 @app.route('/profile')
+@auth_route
 def profile():
     app.config.logger.info("profile()")
-    auth_strava()
     athlete_info = app.config.client.get_athlete()
     app.config.logger.debug("profile / athlete: " + str(athlete_info))
     athlete_stats = app.config.client.get_athlete_stats(athlete_info.id)
@@ -176,11 +190,8 @@ def refresh_activities():
 
 
 @app.route('/activities_js')
+@auth_route
 def activities_js():
-    auth_result = auth_strava()
-    if isinstance(auth_result, flask.Response):
-        session['next_url'] = url_for('activities_js')
-        return auth_result
     return render_template('activities_js.html')
 
 
