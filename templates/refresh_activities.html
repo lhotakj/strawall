@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Refreshing Activities</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+</head>
+<body>
+    <h1>Refreshing Your Strava Activities</h1>
+    <div id="loader">
+        <p>Loading... <span id="progress">0%</span></p>
+        <p id="message"></p>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            const eventSource = new EventSource('/api/refresh_activities');
+
+            eventSource.onmessage = function(event) {
+                console.log(event.data)
+                const data = JSON.parse(event.data);
+                $('#progress').text(data.progress + '%');
+                $('#message').text(data.message);
+
+                if (data.progress === 100) {
+                    eventSource.close();
+                    window.location.href = '/'; // Redirect to home
+                }
+            };
+
+            eventSource.onerror = function(event) {
+                console.error('EventSource failed:', event);
+                console.error('ReadyState:', eventSource.readyState);
+                eventSource.close();
+            };
+        });
+    </script>
+</body>
+</html>

@@ -1,9 +1,10 @@
+import json
 import logging
 from datetime import datetime
 from functools import wraps
 
 import flask.wrappers
-from flask import Flask, redirect, url_for, render_template, request, session
+from flask import Flask, redirect, url_for, render_template, request, session, jsonify
 from stravalib.client import Client
 
 import helpers.mysql as database
@@ -174,37 +175,39 @@ def profile():
 
 # to be in popup
 def refresh_activities():
-    app.config.logger.info("refresh_activities()")
-    auth_strava()
-    cached_activities = app.config.db.load_activities_cache(app.config.session_athlete_id)
-    new_activities = []
-    fresh_activities = []
-    if cached_activities == []:
-        app.config.logger.info("cached_activities: NONE FOUND")
-        fresh_activities = app.config.client.get_activities()
-    else:
-        # Fetch new activities if needed
-        last_cached_timestamp: float = max([a['start_date'] for a in cached_activities], default=None)
-        app.config.logger.info("last (timestamp):" + str(last_cached_timestamp))
-        last_cached_time = datetime.fromtimestamp(float(last_cached_timestamp))
-        app.config.logger.info("last (datetime):" + str(last_cached_time))
-        fresh_activities = app.config.client.get_activities(after=last_cached_time)
+    with app.app_context():
+        # Code that requires application context
+        app.config.logger.info("refresh_activities()")
+        auth_strava()
+        cached_activities = app.config.db.load_activities_cache(app.config.session_athlete_id)
+        new_activities = []
+        fresh_activities = []
+        if cached_activities == []:
+            app.config.logger.info("cached_activities: NONE FOUND")
+            fresh_activities = app.config.client.get_activities()
+        else:
+            # Fetch new activities if needed
+            last_cached_timestamp: float = max([a['start_date'] for a in cached_activities], default=None)
+            app.config.logger.info("last (timestamp):" + str(last_cached_timestamp))
+            last_cached_time = datetime.fromtimestamp(float(last_cached_timestamp))
+            app.config.logger.info("last (datetime):" + str(last_cached_time))
+            fresh_activities = app.config.client.get_activities(after=last_cached_time)
 
-    for activity in fresh_activities:
-        new_activities.append({
-            "activity_id": activity.id,
-            "athlete_id": activity.athlete.id,
-            "name": activity.name,
-            "distance": activity.distance,
-            "type": activity.type.root,
-            "sport_type": activity.sport_type.root,
-            "moving_time": activity.moving_time,
-            "start_date": activity.start_date.timestamp(),
-        })
-    # app.config.logger.warning("loaded:" + str(new_activities))
-    cached_activities.extend(new_activities)
-    cached_activities.sort(key=lambda x: float(x['start_date']), reverse=True)
-    app.config.db.save_activities_cache(app.config.session_athlete_id, new_activities)
+        for activity in fresh_activities:
+            new_activities.append({
+                "activity_id": activity.id,
+                "athlete_id": activity.athlete.id,
+                "name": activity.name,
+                "distance": activity.distance,
+                "type": activity.type.root,
+                "sport_type": activity.sport_type.root,
+                "moving_time": activity.moving_time,
+                "start_date": activity.start_date.timestamp(),
+            })
+        # app.config.logger.warning("loaded:" + str(new_activities))
+        cached_activities.extend(new_activities)
+        cached_activities.sort(key=lambda x: float(x['start_date']), reverse=True)
+        app.config.db.save_activities_cache(app.config.session_athlete_id, new_activities)
 
 
 @app.route('/activities_js')
@@ -226,6 +229,78 @@ def api_activities():
     loaded_activities = list(map(convert_start_date, loaded_activities))
     cached_activities = {"data": loaded_activities}
     return cached_activities
+
+###
+
+@app.route('/refresh_activities')
+@auth_route
+def refresh_activities_page():
+    """
+    Renders the refresh activities page with a loader.
+    """
+    return render_template('refresh_activities.html')
+
+
+def refresh_activities_with_progress(athlete_id):
+    app.config.logger.info("refresh_activities_with_progress()")
+    yield {"progress": 10, "message": "Logging to Strava."}
+    # Use athlete_id instead of session data
+    cached_activities = app.config.db.load_activities_cache(athlete_id)
+    yield {"progress": 30, "message": "Loaded cached activities."}
+
+    new_activities = []
+    fresh_activities = []
+    if not cached_activities:
+        app.config.logger.info("cached_activities: NONE FOUND")
+        fresh_activities = app.config.client.get_activities()
+        yield {"progress": 50, "message": "Fetched all activities from Strava."}
+    else:
+        last_cached_timestamp: float = max([a['start_date'] for a in cached_activities], default=None)
+        app.config.logger.info("last (timestamp):" + str(last_cached_timestamp))
+        last_cached_time = datetime.fromtimestamp(float(last_cached_timestamp))
+        app.config.logger.info("last (datetime):" + str(last_cached_time))
+        fresh_activities = app.config.client.get_activities(after=last_cached_time)
+        yield {"progress": 50, "message": "Fetched new activities from Strava."}
+
+    for activity in fresh_activities:
+        new_activities.append({
+            "activity_id": activity.id,
+            "athlete_id": activity.athlete.id,
+            "name": activity.name,
+            "distance": activity.distance,
+            "type": activity.type.root,
+            "sport_type": activity.sport_type.root,
+            "moving_time": activity.moving_time,
+            "start_date": activity.start_date.timestamp(),
+        })
+    yield {"progress": 70, "message": "Processed new activities."}
+
+    cached_activities.extend(new_activities)
+    cached_activities.sort(key=lambda x: float(x['start_date']), reverse=True)
+    app.config.db.save_activities_cache(app.config.session_athlete_id, new_activities)
+    yield {"progress": 100, "message": "Saved activities to cache."}
+
+##
+@app.route('/api/refresh_activities', methods=['GET'])
+@auth_route
+def api_refresh_activities():
+    athlete_id = session.get('athlete_id')
+
+    def generate():
+        try:
+            for progress_update in refresh_activities_with_progress(athlete_id):
+                # Convert dictionary to JSON string and properly format for SSE
+                if isinstance(progress_update, dict):
+                    yield f"data: {json.dumps(progress_update)}\n\n"
+                else:
+                    # Handle case where progress_update is already a Response object
+                    yield f"data: {json.dumps(progress_update.json)}\n\n"
+        except Exception as e:
+            app.config.logger.error(f"Error refreshing activities: {e}")
+            yield f"data: {json.dumps({'progress': 100, 'message': 'Error occurred'})}\n\n"
+
+    return flask.Response(generate(), mimetype='text/event-stream')
+
 
 
 if __name__ == '__main__':
