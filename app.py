@@ -152,7 +152,6 @@ def callback():
     app.config.db.save_token_cache(athlete.id, token_data)
     session['athlete_id'] = athlete.id
     app.config.session_athlete_id = athlete.id
-    refresh_activities()
     return redirect(next_url)
 
 
@@ -245,22 +244,28 @@ def refresh_activities_with_progress(athlete_id):
     app.config.logger.info("refresh_activities_with_progress()")
     yield {"progress": 10, "message": "Logging to Strava."}
     # Use athlete_id instead of session data
+    yield {"progress": 20, "message": "Loaded cached activities."}
     cached_activities = app.config.db.load_activities_cache(athlete_id)
-    yield {"progress": 30, "message": "Loaded cached activities."}
+    yield {"progress": 20, "message": f"Cached activities loaded (${len(cached_activities)})."}
+
+    last_cached_size: int = 0
+    new_cached_size: int = 0
 
     new_activities = []
     fresh_activities = []
     if not cached_activities:
         app.config.logger.info("cached_activities: NONE FOUND")
+        yield {"progress": 50, "message": "Fetching all your activities from Strava. It may take some time, do not close this page"}
         fresh_activities = app.config.client.get_activities()
-        yield {"progress": 50, "message": "Fetched all activities from Strava."}
+        yield {"progress": 50, "message": "All activities from Strava successfully fetched."}
     else:
+        last_cached_size = len(cached_activities)
         last_cached_timestamp: float = max([a['start_date'] for a in cached_activities], default=None)
         app.config.logger.info("last (timestamp):" + str(last_cached_timestamp))
         last_cached_time = datetime.fromtimestamp(float(last_cached_timestamp))
         app.config.logger.info("last (datetime):" + str(last_cached_time))
         fresh_activities = app.config.client.get_activities(after=last_cached_time)
-        yield {"progress": 50, "message": "Fetched new activities from Strava."}
+        yield {"progress": 50, "message": f"All new activities fetched from Strava"}
 
     for activity in fresh_activities:
         new_activities.append({
@@ -273,12 +278,14 @@ def refresh_activities_with_progress(athlete_id):
             "moving_time": activity.moving_time,
             "start_date": activity.start_date.timestamp(),
         })
-    yield {"progress": 70, "message": "Processed new activities."}
+
+    new_cached_size: int = len(cached_activities)
+    yield {"progress": 70, "message": f"Total new activities ${new_cached_size - last_cached_size}."}
 
     cached_activities.extend(new_activities)
     cached_activities.sort(key=lambda x: float(x['start_date']), reverse=True)
     app.config.db.save_activities_cache(app.config.session_athlete_id, new_activities)
-    yield {"progress": 100, "message": "Saved activities to cache."}
+    yield {"progress": 100, "message": f"Completed. Total {new_cached_size} activities, {new_cached_size - last_cached_size} newly fetched."}
 
 ##
 @app.route('/api/refresh_activities', methods=['GET'])
