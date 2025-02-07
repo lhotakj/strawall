@@ -1,3 +1,6 @@
+from flask import send_from_directory
+import os
+
 import json
 import logging
 from datetime import datetime
@@ -10,6 +13,7 @@ from stravalib.client import Client
 import helpers.mysql as database
 import helpers.strava as strava
 from engine.engine import Engine
+from engine.render_mode import RenderMode
 
 app = Flask(__name__)
 
@@ -97,6 +101,13 @@ def auth_strava() -> flask.Response | bool:
 def inject_current_year():
     return {'current_year': datetime.now().year}
 
+@app.route('/engine/<path:filename>')
+def serve_engine_html(filename):
+    """
+    Serves static files from the /engine/html directory.
+    """
+    engine_html_dir: str = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'engine', 'html')
+    return send_from_directory(engine_html_dir, filename)
 
 @app.route('/')
 def main():
@@ -118,6 +129,13 @@ def page_not_found(e):
 def stats_image():
     engine = Engine(app)
     return engine.render()
+
+@app.route('/stats_html')
+@auth_route
+def stats_html():
+    engine = Engine(app)
+    engine.render_html(RenderMode.HTML)
+    return flask.Response(engine.html_data, mimetype='text/html')
 
 
 @app.route('/authorize_strava')

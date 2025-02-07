@@ -2,6 +2,8 @@ import io
 import os
 import subprocess
 from pathlib import Path
+from .render_mode import RenderMode
+
 
 from PIL import Image, ImageDraw, ImageFont
 from flask import Flask, Response, send_file
@@ -18,6 +20,7 @@ class Engine:
     CANVAS_HEIGHT: int = 1080
 
     app: Flask
+    html_data: str
 
     def __init__(self, app: Flask):
         self.app = app
@@ -75,34 +78,43 @@ class Engine:
         # Serve the image
         return send_file(img_io, mimetype='image/png')
 
-    def render(self):
+    def render_html(self, mode: RenderMode = RenderMode.IMAGE):
         self.app.config.logger.info("render()")
         # Define the path to the HTML files
         pwd: str = os.path.join(Path.cwd(), "engine", "html")
 
         # Read the input file in read mode
         with open(pwd + "/page.html", "r") as f:
-            html_data: str = f.read()
+            self.html_data: str = f.read()
 
         widget_goal = self.load_widget_template("ytd_ride")
 
         with open(pwd + "/widget-stats.html", "r") as f:
             widget_stats: str = f.read()
 
-        # Replace the paths in the HTML data
-        html_data = html_data.replace('href="./', 'href="' + pwd + '/')
-        html_data = html_data.replace('src="./', 'src="' + pwd + '/')
-        html_data = html_data.replace('url(./', 'url(' + pwd + '/')
+        path: str = ""
+        if mode == RenderMode.IMAGE:
+            path = pwd
+        elif mode == RenderMode.HTML:
+            path = "/engine"
 
-        html_data = html_data.replace('<widget id="widget-goal.html"></widget>', widget_goal)
-        html_data = html_data.replace('<widget id="widget-stats.html"></widget>', widget_stats)
-        html_data = html_data.replace('{{ widget_font_color }}', self.WIDGET_FONT_COLOR)
-        html_data = html_data.replace('{{ widget_font_color_stroke }}', self.WIDGET_FONT_COLOR_STROKE)
-        html_data = html_data.replace('{{ widget_font_stroke_width }}', self.WIDGET_FONT_STROKE_WIDTH)
-        html_data = html_data.replace('{{ canvas_width }}', str(self.CANVAS_WIDTH))
-        html_data = html_data.replace('{{ canvas_height }}', str(self.CANVAS_HEIGHT))
+        # Replace the paths in the HTML data
+        self.html_data = self.html_data.replace('href="./', 'href="' + path + '/')
+        self.html_data = self.html_data.replace('src="./', 'src="' + path + '/')
+        self.html_data = self.html_data.replace('url(./', 'url(' + path + '/')
+
+        self.html_data =self. html_data.replace('<widget id="widget-goal.html"></widget>', widget_goal)
+        self.html_data = self.html_data.replace('<widget id="widget-stats.html"></widget>', widget_stats)
+        self.html_data = self.html_data.replace('{{ widget_font_color }}', self.WIDGET_FONT_COLOR)
+        self.html_data = self.html_data.replace('{{ widget_font_color_stroke }}', self.WIDGET_FONT_COLOR_STROKE)
+        self.html_data = self.html_data.replace('{{ widget_font_stroke_width }}', self.WIDGET_FONT_STROKE_WIDTH)
+        self.html_data = self.html_data.replace('{{ canvas_width }}', str(self.CANVAS_WIDTH))
+        self.html_data = self.html_data.replace('{{ canvas_height }}', str(self.CANVAS_HEIGHT))
 
         #self.app.config.logger.info(html_data)
+
+    def render(self):
+        self.render_html()
 
         # Add --local-file-access to the options
         options = ['--quality', '100',
@@ -114,7 +126,7 @@ class Engine:
         # Run the command with the updated options and capture the output
         result = subprocess.run(
             ['wkhtmltoimage'] + options + ['-', '-'],
-            input=html_data.encode(),
+            input=self.html_data.encode(),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
