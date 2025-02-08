@@ -102,7 +102,7 @@ class Database(interface_database.Database):
         if not self.connect(): return []
         try:
             cursor = self.cnx.cursor()
-            sql: str = "SELECT activity_id, athlete_id, name, distance, type, sport_type, moving_time, start_date FROM activities WHERE athlete_id = " + str(
+            sql: str = "SELECT activity_id, athlete_id, name, distance, total_elevation_gain, type, sport_type, moving_time, start_date FROM activities WHERE athlete_id = " + str(
                 athlete_id) + " ORDER BY start_date DESC"
             self.app.config.logger.info("RUNNING: " + sql)
             cursor.execute(sql)
@@ -113,10 +113,11 @@ class Database(interface_database.Database):
                     "athlete_id": row[1],
                     "name": row[2],
                     "distance": row[3],
-                    "type": row[4],
-                    "sport_type": row[5],
-                    "moving_time": row[6],
-                    "start_date": row[7],
+                    "total_elevation_gain": row[4],
+                    "type": row[5],
+                    "sport_type": row[6],
+                    "moving_time": row[7],
+                    "start_date": row[8],
                 })
             cursor.close()
             self.cnx.close()
@@ -133,11 +134,12 @@ class Database(interface_database.Database):
             for activity in activities:
                 # self.app.config.logger.warning(activity)
                 cursor.execute(
-                    "INSERT INTO activities (activity_id, athlete_id, name, distance, type, sport_type, moving_time, start_date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+                    "INSERT INTO activities (activity_id, athlete_id, name, distance, total_elevation_gain, type, sport_type, moving_time, start_date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
                     (activity['activity_id'],
                      activity['athlete_id'],
                      activity['name'],
                      activity['distance'],
+                     activity['total_elevation_gain'],
                      activity['type'],
                      activity['sport_type'],
                      activity['moving_time'],
@@ -151,17 +153,39 @@ class Database(interface_database.Database):
             self.app.config.logger.exception("Failed to save activities." + str(ex))
             return []
 
+    def save_athlete_stats(self, athlete_id, ytd_ride_current, ytd_ride_elev_current) -> bool:
+        if not self.connect(): return False
+        try:
+            self.app.config.logger.exception("Saving athlete_stats.")
+            cursor = self.cnx.cursor()
+            query = "UPDATE athletes SET ytd_ride_current = %s, ytd_ride_elev_current = %s WHERE athlete_id = %s"
+            cursor.execute(query, (ytd_ride_current, ytd_ride_elev_current, athlete_id))
+            # UPDATE defaultdb.athletes t SET t.ytd_swim = 23, t.ytd_ride_current = 32 WHERE t.athlete_id = 711108
+            self.cnx.commit()
+            cursor.close()
+            self.cnx.close()
+            return True
+        except Exception as ex:
+            self.app.config.logger.exception("Failed to save athlete stats." + str(ex))
+            return False
+
+
     def load_profile(self, athlete_id) -> dict | None:
         if not self.connect(): return []
         try:
             cursor = self.cnx.cursor()
             cursor.execute(
-                "SELECT ytd_ride, ytd_run, ytd_swim FROM athletes WHERE athlete_id = " + str(athlete_id) + "")
+                "SELECT ytd_ride, ytd_run, ytd_swim, ytd_ride_current, ytd_ride_elev_current  FROM athletes WHERE athlete_id = " + str(athlete_id) + "")
             result = cursor.fetchone()
             cursor.close()
             self.cnx.close()
+            print(result)
             if result:
-                return {"ytd_ride": int(result[0]), "ytd_run": int(result[1]), "ytd_swim": int(result[2])}
+                return {"ytd_ride": int(result[0]),
+                        "ytd_run": int(result[1]),
+                        "ytd_swim": int(result[2]),
+                        "ytd_ride_current": int(result[3]),
+                        "ytd_ride_elev_current": int(result[4])}
             else:
                 self.app.config.logger.warning("No result.")
                 return None

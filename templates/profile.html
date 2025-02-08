@@ -26,7 +26,7 @@
         <tr>
             <th>Year-to-date Ride Distance</th>
             <td>
-                {{ athlete_stats.ytd_ride_totals.distance }} / {{ profile.ytd_ride }} meters
+                {{ profile.ytd_ride_current }} / {{ profile.ytd_ride }} meters
                 {% if profile.ytd_ride > 0 %}
                     ({{ (athlete_stats.ytd_ride_totals.distance / profile.ytd_ride) * 100 | round(2) }}%)
                 {% else %}

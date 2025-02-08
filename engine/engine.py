@@ -29,9 +29,14 @@ class Engine:
         self.app.config.logger.info(app.config.db)
         pass
 
-    def widget_ytd_ride_data(self, athlete_id: int) -> dict:
-        # profile_info = db.load_profile(athlete_info.id)
-        return {"ytd_ride": 10000, "ytd_ride_totals": 239, "achieved": 2.3, "text": "ride"}
+    def widget_ytd_ride_data(self) -> dict:
+        athlete_id: int = self.app.config.session_athlete_id
+        profile_info = self.db.load_profile(athlete_id)
+        return {"ytd_ride": profile_info["ytd_ride"],
+                "ytd_ride_current": profile_info["ytd_ride_current"],
+                "ytd_ride_elev_current": profile_info["ytd_ride_elev_current"],
+                "achieved": round(int(profile_info["ytd_ride_current"]) / int(profile_info["ytd_ride"]) * 1000) / 10,
+                "text": "ride"}
 
     def load_widget_template(self, widget_type):
         pwd: str = os.path.join(Path.cwd(), "engine", "html")
@@ -40,13 +45,14 @@ class Engine:
         data = {}
         if widget_type == "ytd_ride":
             file = "widgets/ytd.html"
-            data = self.widget_ytd_ride_data(1)
+            data = self.widget_ytd_ride_data()
         if widget_type == "ride_stats":
-            file = "widget-stats.html"
-            data = {}
+            file = "widgets/widget-ytd-ride-totals.html"
+            data = self.widget_ytd_ride_data()
         with open(pwd + "/" + file, "r") as f:
             html_data: str = f.read()
         for key, value in data.items():
+            print(key)
             html_data = html_data.replace('{{ ' + key + ' }}', str(value))
         return html_data
 
@@ -65,7 +71,6 @@ class Engine:
 
         # Specify the font and size (you may need to download a ttf font and provide the path)
         font = ImageFont.load_default(15)
-
 
         # Add text to the image
         draw.text((20, 213), message, font=font, fill=(224, 64, 6, 255))  # White color with full opacity
@@ -88,9 +93,10 @@ class Engine:
             self.html_data: str = f.read()
 
         widget_goal = self.load_widget_template("ytd_ride")
+        widget_stats: str = self.load_widget_template("ride_stats")
 
-        with open(pwd + "/widget-stats.html", "r") as f:
-            widget_stats: str = f.read()
+        # with open(pwd + "/widget-stats.html", "r") as f:
+        #     widget_stats: str = f.read()
 
         path: str = ""
         if mode == RenderMode.IMAGE:

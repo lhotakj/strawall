@@ -190,42 +190,6 @@ def profile():
     return render_template('profile.html', athlete_stats=athlete_stats, athlete=athlete_info, profile=profile_info)
 
 
-# to be in popup
-def refresh_activities():
-    with app.app_context():
-        # Code that requires application context
-        app.config.logger.info("refresh_activities()")
-        auth_strava()
-        cached_activities = app.config.db.load_activities_cache(app.config.session_athlete_id)
-        new_activities = []
-        fresh_activities = []
-        if cached_activities == []:
-            app.config.logger.info("cached_activities: NONE FOUND")
-            fresh_activities = app.config.client.get_activities()
-        else:
-            # Fetch new activities if needed
-            last_cached_timestamp: float = max([a['start_date'] for a in cached_activities], default=None)
-            app.config.logger.info("last (timestamp):" + str(last_cached_timestamp))
-            last_cached_time = datetime.fromtimestamp(float(last_cached_timestamp))
-            app.config.logger.info("last (datetime):" + str(last_cached_time))
-            fresh_activities = app.config.client.get_activities(after=last_cached_time)
-
-        for activity in fresh_activities:
-            new_activities.append({
-                "activity_id": activity.id,
-                "athlete_id": activity.athlete.id,
-                "name": activity.name,
-                "distance": activity.distance,
-                "type": activity.type.root,
-                "sport_type": activity.sport_type.root,
-                "moving_time": activity.moving_time,
-                "start_date": activity.start_date.timestamp(),
-            })
-        # app.config.logger.warning("loaded:" + str(new_activities))
-        cached_activities.extend(new_activities)
-        cached_activities.sort(key=lambda x: float(x['start_date']), reverse=True)
-        app.config.db.save_activities_cache(app.config.session_athlete_id, new_activities)
-
 
 @app.route('/activities_js')
 @auth_route
@@ -291,6 +255,7 @@ def refresh_activities_with_progress(athlete_id):
             "athlete_id": activity.athlete.id,
             "name": activity.name,
             "distance": activity.distance,
+            "total_elevation_gain": activity.total_elevation_gain,
             "type": activity.type.root,
             "sport_type": activity.sport_type.root,
             "moving_time": activity.moving_time,
@@ -303,6 +268,22 @@ def refresh_activities_with_progress(athlete_id):
     cached_activities.extend(new_activities)
     cached_activities.sort(key=lambda x: float(x['start_date']), reverse=True)
     app.config.db.save_activities_cache(app.config.session_athlete_id, new_activities)
+
+    # Re-calculate ytd_ride_current
+    current_year = datetime.now().year
+    ride_types = ['Ride']  # Include all ride types from Strava
+    ytd_ride_current = sum(
+        activity['distance'] for activity in cached_activities
+        if datetime.fromtimestamp(float(activity['start_date'])).year == current_year and activity['type'] in ride_types
+    )
+    ytd_ride_elev_current = sum(
+        activity['total_elevation_gain'] for activity in cached_activities
+        if datetime.fromtimestamp(float(activity['start_date'])).year == current_year
+        and activity['type'] in ride_types
+        and activity['total_elevation_gain'] is not None
+    )
+    app.config.db.save_athlete_stats(app.config.session_athlete_id, ytd_ride_current, ytd_ride_elev_current)
+
     yield {"progress": 100, "message": f"Completed. Total {new_cached_size} activities, {new_cached_size - last_cached_size} newly fetched."}
 
 ##
@@ -321,7 +302,7 @@ def api_refresh_activities():
                     # Handle case where progress_update is already a Response object
                     yield f"data: {json.dumps(progress_update.json)}\n\n"
         except Exception as e:
-            app.config.logger.error(f"Error refreshing activities: {e}")
+            app.config.logger.error(f"Error refreshing activities: {e}, {e.__context__}")
             yield f"data: {json.dumps({'progress': 100, 'message': 'Error occurred'})}\n\n"
 
     return flask.Response(generate(), mimetype='text/event-stream')
