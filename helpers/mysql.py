@@ -1,3 +1,4 @@
+import decimal
 import os
 
 import mysql.connector
@@ -153,22 +154,34 @@ class Database(interface_database.Database):
             self.app.config.logger.exception("Failed to save activities." + str(ex))
             return []
 
-    def save_athlete_stats(self, athlete_id, ytd_ride_current, ytd_ride_elev_current) -> bool:
-        if not self.connect(): return False
+    def save_athlete_stats(self, athlete_id: int, ytd_ride_current, ytd_ride_elev_current, goals: dict = None) -> bool:
+        if not self.connect():
+            return False
         try:
+            # to do read current plan and scopes! Map them
+            # read from this table
             self.app.config.logger.exception("Saving athlete_stats.")
             cursor = self.cnx.cursor()
             query = "UPDATE athletes SET ytd_ride_current = %s, ytd_ride_elev_current = %s WHERE athlete_id = %s"
             cursor.execute(query, (ytd_ride_current, ytd_ride_elev_current, athlete_id))
-            # UPDATE defaultdb.athletes t SET t.ytd_swim = 23, t.ytd_ride_current = 32 WHERE t.athlete_id = 711108
             self.cnx.commit()
+
+            if goals:
+                cursor = self.cnx.cursor()
+                goal_queries = []
+                for key, value in goals.items():
+                    goal_queries.append((athlete_id, 'y', 0, key, round(value, 2)))
+
+                insert_query = "INSERT INTO goals (athlete_id, scope, plan, goal_name, current) VALUES (%s, %s, %s, %s, %s)"
+                cursor.executemany(insert_query, goal_queries)
+                self.cnx.commit()
+
             cursor.close()
             self.cnx.close()
             return True
         except Exception as ex:
-            self.app.config.logger.exception("Failed to save athlete stats." + str(ex))
+            self.app.config.logger.exception("Failed to save athlete stats. " + str(ex))
             return False
-
 
     def load_profile(self, athlete_id) -> dict | None:
         if not self.connect(): return []

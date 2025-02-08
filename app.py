@@ -1,5 +1,7 @@
 from flask import send_from_directory
 import os
+from decimal import Decimal
+
 
 import json
 import logging
@@ -226,9 +228,9 @@ def refresh_activities_with_progress(athlete_id):
     app.config.logger.info("refresh_activities_with_progress()")
     yield {"progress": 10, "message": "Logging to Strava."}
     # Use athlete_id instead of session data
-    yield {"progress": 20, "message": "Loaded cached activities."}
+    yield {"progress": 20, "message": "Loading all activities. This may take some time"}
     cached_activities = app.config.db.load_activities_cache(athlete_id)
-    yield {"progress": 20, "message": f"Cached activities loaded (${len(cached_activities)})."}
+    yield {"progress": 30, "message": f"Cached activities loaded ({len(cached_activities)})."}
 
     last_cached_size: int = 0
     new_cached_size: int = 0
@@ -237,17 +239,18 @@ def refresh_activities_with_progress(athlete_id):
     fresh_activities = []
     if not cached_activities:
         app.config.logger.info("cached_activities: NONE FOUND")
-        yield {"progress": 50, "message": "Fetching all your activities from Strava. It may take some time, do not close this page"}
+        yield {"progress": 40, "message": "Fetching all your activities from Strava. It may take some time, do not close this page"}
         fresh_activities = app.config.client.get_activities()
         yield {"progress": 50, "message": "All activities from Strava successfully fetched."}
     else:
+        yield {"progress": 50, "message": "Incremental fetching activities from Strava. . It may take some time, do not close this page"}
         last_cached_size = len(cached_activities)
         last_cached_timestamp: float = max([a['start_date'] for a in cached_activities], default=None)
         app.config.logger.info("last (timestamp):" + str(last_cached_timestamp))
         last_cached_time = datetime.fromtimestamp(float(last_cached_timestamp))
         app.config.logger.info("last (datetime):" + str(last_cached_time))
         fresh_activities = app.config.client.get_activities(after=last_cached_time)
-        yield {"progress": 50, "message": f"All new activities fetched from Strava"}
+        yield {"progress": 60, "message": f"All new activities fetched from Strava"}
 
     for activity in fresh_activities:
         new_activities.append({
@@ -263,7 +266,7 @@ def refresh_activities_with_progress(athlete_id):
         })
 
     new_cached_size: int = len(cached_activities)
-    yield {"progress": 70, "message": f"Total new activities ${new_cached_size - last_cached_size}."}
+    yield {"progress": 70, "message": f"Refreshing stats"}
 
     cached_activities.extend(new_activities)
     cached_activities.sort(key=lambda x: float(x['start_date']), reverse=True)
@@ -271,18 +274,49 @@ def refresh_activities_with_progress(athlete_id):
 
     # Re-calculate ytd_ride_current
     current_year = datetime.now().year
-    ride_types = ['Ride']  # Include all ride types from Strava
     ytd_ride_current = sum(
-        activity['distance'] for activity in cached_activities
-        if datetime.fromtimestamp(float(activity['start_date'])).year == current_year and activity['type'] in ride_types
+        Decimal(activity['distance']) for activity in cached_activities
+        if datetime.fromtimestamp(float(activity['start_date'])).year == current_year
+        and activity['type'] in ['Ride']
     )
     ytd_ride_elev_current = sum(
-        activity['total_elevation_gain'] for activity in cached_activities
+        Decimal(activity['total_elevation_gain']) for activity in cached_activities
         if datetime.fromtimestamp(float(activity['start_date'])).year == current_year
-        and activity['type'] in ride_types
+        and activity['type'] in ['Ride']
         and activity['total_elevation_gain'] is not None
     )
-    app.config.db.save_athlete_stats(app.config.session_athlete_id, ytd_ride_current, ytd_ride_elev_current)
+
+    yield {"progress": 80, "message": f"Computing goals ..."}
+
+    # Get the current week number (Monday as the first day)
+    # W - Monday U - Sunday
+    current_week = datetime.now().strftime("%W")
+    # Calculate the total distance and total elevation gain for the current week
+    wtd_ride_current = sum(
+        activity['distance'] for activity in cached_activities
+        if datetime.fromtimestamp(float(activity['start_date'])).strftime("%W") == current_week
+        and datetime.fromtimestamp(float(activity['start_date'])).year == current_year
+        and activity['type'] in ['Ride']
+    )
+
+
+    wtd_ride_elev_current = sum(
+        activity['total_elevation_gain'] for activity in cached_activities
+        if datetime.fromtimestamp(float(activity['start_date'])).strftime("%W") == current_week
+        and datetime.fromtimestamp(float(activity['start_date'])).year == current_year
+        and activity['type'] in ['Ride']
+        and activity['total_elevation_gain'] is not None
+    )
+
+    app.config.db.save_athlete_stats(app.config.session_athlete_id,
+                                 ytd_ride_current,
+                                 ytd_ride_elev_current,
+                                 {
+                                     "Yearly Ride Distance (km)": ytd_ride_current,
+                                     "Yearly Ride Elevation(m)": ytd_ride_elev_current,
+                                     "Weekly Ride Distance (km)": wtd_ride_current,
+                                     "Weekly Ride Elevation(m)": wtd_ride_elev_current,
+                                 })
 
     yield {"progress": 100, "message": f"Completed. Total {new_cached_size} activities, {new_cached_size - last_cached_size} newly fetched."}
 
@@ -302,8 +336,8 @@ def api_refresh_activities():
                     # Handle case where progress_update is already a Response object
                     yield f"data: {json.dumps(progress_update.json)}\n\n"
         except Exception as e:
-            app.config.logger.error(f"Error refreshing activities: {e}, {e.__context__}")
-            yield f"data: {json.dumps({'progress': 100, 'message': 'Error occurred'})}\n\n"
+            app.config.logger.error(f"Error refreshing activities: {e}. {e.__traceback__}")
+            yield f"data: {json.dumps({'progress': 100, 'message': 'Error occurred. Please try again'})}\n\n"
 
     return flask.Response(generate(), mimetype='text/event-stream')
 
