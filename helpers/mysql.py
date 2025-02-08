@@ -158,7 +158,7 @@ class Database(interface_database.Database):
         if not self.connect():
             return False
         try:
-            # to do read current plan and scopes! Map them
+            # todo read current plan and scopes! Map them
             # read from this table
             self.app.config.logger.exception("Saving athlete_stats.")
             cursor = self.cnx.cursor()
