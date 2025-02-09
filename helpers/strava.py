@@ -1,5 +1,9 @@
+
+from datetime import datetime
+from .strava_goals import StatsType as strava_goals
 import os
 
+from _decimal import Decimal
 from flask import Flask
 
 
@@ -8,108 +12,119 @@ from flask import Flask
 # from stravalib.protocol import AccessInfo
 # from stravalib.strava_model import ActivityStats, SummaryActivity
 
-class Strava():
+
+
+class Strava:
     client_id: int
     client_secret: str
     redirect_uri: str
+    app: Flask
 
-    def __init__(self, application: Flask):
+    def __init__(self, app: Flask):
         self.client_id = int(os.environ.get("STRAVA_CLIENT_ID"))
         self.client_secret = os.environ.get("STRAVA_CLIENT_SECRET")
         self.redirect_uri = 'http://home:5000/callback'
+        self.app = app
         if not self.client_id:
-            application.config.logger.error("STRAVA_CLIENT_ID environment variable not set")
+            self.app.config.logger.error("STRAVA_CLIENT_ID environment variable not set")
             return
         if not self.client_secret:
-            application.config.logger.error("STRAVA_CLIENT_SECRET environment variable not set")
+            self.app.config.logger.error("STRAVA_CLIENT_SECRET environment variable not set")
             return
 
-# def revalidate_strava_client(strava_client) -> Client:
-#     config = Configuration.Configuration()
-#     now_timestamp = datetime.now().timestamp()
-#     expires_at = int(redis.hget(f"user:{session['username']}", "expires_at")) - (5 * 60 * 1000)  # -5min
-#     if now_timestamp > expires_at:
-#         app.logger.debug(f"revalidate_strava_client() : start : revalidating")
-#         token_response: AccessInfo = strava_client.refresh_access_token(
-#             client_id=config.strava_client_id,
-#             client_secret=config.strava_client_secret,
-#             refresh_token=redis.hget(f"user:{session['username']}", "refresh_token"))
-#         access_token = token_response['access_token']
-#         refresh_token = token_response['refresh_token']
-#         expires_at = token_response['expires_at']
-#         strava_client.access_token = access_token
-#         strava_client.refresh_token = refresh_token
-#         strava_client.token_expires_at = expires_at
-#         redis.client().hset(f"user:{session['username']}", "strava_client", helper.pickle_object(strava_client))
-#         redis.client().hset(f"user:{session['username']}", "access_token", access_token)
-#         redis.client().hset(f"user:{session['username']}", "refresh_token", refresh_token)
-#         redis.client().hset(f"user:{session['username']}", "expires_at", expires_at)
-#         app.logger.debug(f"revalidate_strava_client() : end : revalidated - new token expires at: {expires_at}")
-#     return strava_client
-#
-#
-# def get_client_from_redis() -> Client:
-#     app.logger.debug(
-#         f"get_client_from_redis() : start : session['username']='{session['username'] if 'username' in session else ''}'")
-#     if session:
-#         if session['username']:
-#             if session['username'] != "":
-#                 username: str = session['username']
-#                 data = redis.hgetall(f"user:{username}")
-#                 if "strava_client" in data:
-#                     app.logger.debug(f"get_client_from_redis() : contains 'strava_client'")
-#                     return helper.depickle_object(data.get("strava_client"))
-#                 else:
-#                     app.logger.debug(f"get_client_from_redis() : doesn't contain 'strava_client'")
-#                     flash("Re-authorization required", category='warning')
-#     return None
-#
-#
-# def get_activities(before: datetime | None, after: datetime | None, limit: int | None) -> list[SummaryActivity]:
-#     app.logger.debug(
-#         f"get_activities() : start : session['username']='{session['username'] if 'username' in session else ''}'")
-#     strava_client = get_client_from_redis()
-#     strava_client = revalidate_strava_client(strava_client)
-#     summary_activities: list[SummaryActivity] = strava_client.get_activities(before=before,
-#                                                                              after=after,
-#                                                                              limit=limit)
-#     return summary_activities
-#
-#
-# def get_athlete(fresh: bool = False) -> Athlete:
-#     app.logger.debug(
-#         f"get_athlete(fresh={fresh}) : start : session['username']='{session['username'] if 'username' in session else ''}'")
-#     strava_client = get_client_from_redis()
-#     if fresh:
-#         if strava_client:
-#             strava_client = revalidate_strava_client(strava_client)
-#             athlete: Athlete = strava_client.get_athlete()
-#             if athlete:
-#                 app.logger.debug(f"get_athlete({fresh}) : athlete info fetched, updating redis, returning fresh")
-#                 redis.client().hset(f"user:{session['username']}", "strava_athlete", helper.pickle_object(athlete))
-#                 redis.client().hset(f"user:{session['username']}", "strava_id", athlete.id)
-#                 return athlete
-#     else:
-#         if session:
-#             if session['username']:
-#                 if session['username'] != "":
-#                     data = redis.hgetall(f"user:{session['username']}")
-#                     if "strava_client" in data:
-#                         app.logger.debug(f"get_athlete({fresh}) : reading from redis, returning cached data")
-#                         return helper.depickle_object(data.get("strava_athlete"))
-#                     else:
-#                         app.logger.debug(f"get_athlete({fresh}) : strava_client missing, getting fresh")
-#                         return get_athlete(fresh=True)
-#     app.logger.debug(f"get_athlete({fresh}) : fallback")
-#     return None
-#
-#
-# def get_athlete_stats(athlete_id) -> ActivityStats:
-#     app.logger.debug(
-#         f"get_athlete_stats(athlete_id={athlete_id}) : start : session['username']='{session['username'] if 'username' in session else ''}'")
-#     strava_client = get_client_from_redis()
-#     if strava_client:
-#         app.logger.debug(f"get_athlete_stats(athlete_id={athlete_id}) : data_read")
-#         strava_client = revalidate_strava_client(strava_client)
-#         return strava_client.get_athlete_stats(athlete_id)
-#     return None
+
+    def refresh_activities_with_progress(self, athlete_id):
+        self.app.config.logger.info("refresh_activities_with_progress()")
+        yield {"progress": 10, "message": "Logging to Strava."}
+        # Use athlete_id instead of session data
+        yield {"progress": 20, "message": "Loading all activities. This may take some time"}
+        cached_activities = self.app.config.db.load_activities_cache(athlete_id)
+        yield {"progress": 30, "message": f"Cached activities loaded ({len(cached_activities)})."}
+
+        last_cached_size: int = 0
+        new_cached_size: int = 0
+
+        new_activities = []
+        fresh_activities = []
+        if not cached_activities:
+            self.app.config.logger.info("cached_activities: NONE FOUND")
+            yield {"progress": 40, "message": "Fetching all your activities from Strava. It may take some time, do not close this page"}
+            fresh_activities = self.app.config.client.get_activities()
+            yield {"progress": 50, "message": "All activities from Strava successfully fetched."}
+        else:
+            yield {"progress": 50, "message": "Incremental fetching activities from Strava. . It may take some time, do not close this page"}
+            last_cached_size = len(cached_activities)
+            last_cached_timestamp: float = max([a['start_date'] for a in cached_activities], default=None)
+            self.app.config.logger.info("last (timestamp):" + str(last_cached_timestamp))
+            last_cached_time = datetime.fromtimestamp(float(last_cached_timestamp))
+            self.app.config.logger.info("last (datetime):" + str(last_cached_time))
+            fresh_activities = self.app.config.client.get_activities(after=last_cached_time)
+            yield {"progress": 60, "message": f"All new activities fetched from Strava"}
+
+        for activity in fresh_activities:
+            new_activities.append({
+                "activity_id": activity.id,
+                "athlete_id": activity.athlete.id,
+                "name": activity.name,
+                "distance": activity.distance,
+                "total_elevation_gain": activity.total_elevation_gain,
+                "type": activity.type.root,
+                "sport_type": activity.sport_type.root,
+                "moving_time": activity.moving_time,
+                "start_date": activity.start_date.timestamp(),
+            })
+
+        new_cached_size: int = len(cached_activities)
+        yield {"progress": 70, "message": f"Refreshing stats"}
+
+        cached_activities.extend(new_activities)
+        cached_activities.sort(key=lambda x: float(x['start_date']), reverse=True)
+        self.app.config.db.save_activities_cache(self.app.config.session_athlete_id, new_activities)
+
+        # Re-calculate ytd_ride_current
+        current_year = datetime.now().year
+        ytd_ride_current = sum(
+            Decimal(activity['distance']) for activity in cached_activities
+            if datetime.fromtimestamp(float(activity['start_date'])).year == current_year
+            and activity['type'] in ['Ride']
+        )
+        ytd_ride_elev_current = sum(
+            Decimal(activity['total_elevation_gain']) for activity in cached_activities
+            if datetime.fromtimestamp(float(activity['start_date'])).year == current_year
+            and activity['type'] in ['Ride']
+            and activity['total_elevation_gain'] is not None
+        )
+
+        yield {"progress": 80, "message": f"Computing goals ..."}
+
+        # Get the current week number (Monday as the first day)
+        # W - Monday U - Sunday
+        current_week = datetime.now().strftime("%W")
+        # Calculate the total distance and total elevation gain for the current week
+        wtd_ride_current = sum(
+            activity['distance'] for activity in cached_activities
+            if datetime.fromtimestamp(float(activity['start_date'])).strftime("%W") == current_week
+            and datetime.fromtimestamp(float(activity['start_date'])).year == current_year
+            and activity['type'] in ['Ride']
+        )
+
+
+        wtd_ride_elev_current = sum(
+            activity['total_elevation_gain'] for activity in cached_activities
+            if datetime.fromtimestamp(float(activity['start_date'])).strftime("%W") == current_week
+            and datetime.fromtimestamp(float(activity['start_date'])).year == current_year
+            and activity['type'] in ['Ride']
+            and activity['total_elevation_gain'] is not None
+        )
+
+        self.app.config.db.save_athlete_stats(self.app.config.session_athlete_id,
+                                     ytd_ride_current,
+                                     ytd_ride_elev_current,
+                                     {
+                                         strava_goals.yord.name: ytd_ride_current,
+                                         strava_goals.yore.name: ytd_ride_elev_current,
+                                         strava_goals.word.name: wtd_ride_current,
+                                         strava_goals.wore.name: wtd_ride_elev_current,
+                                     })
+
+        yield {"progress": 100, "message": f"Completed. Total {new_cached_size} activities, {new_cached_size - last_cached_size} newly fetched."}

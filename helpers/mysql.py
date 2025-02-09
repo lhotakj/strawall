@@ -7,6 +7,7 @@ from mysql.connector import errorcode
 from mysql.connector.pooling import PooledMySQLConnection
 
 import helpers.interfaces.database as interface_database
+from .strava_goals import StatsType as strava_goals
 
 
 class Database(interface_database.Database):
@@ -154,30 +155,65 @@ class Database(interface_database.Database):
             self.app.config.logger.exception("Failed to save activities." + str(ex))
             return []
 
+    # TODO: split goals and current!
+    def load_athlete_stats(self, athlete_id: int) -> dict:
+        if not self.connect(): return dict()
+        try:
+            cursor = self.cnx.cursor()
+            sql: str = "SELECT * FROM goals WHERE athlete_id = %d" % athlete_id
+            self.app.config.logger.info("load sql: " + sql)
+            cursor.execute(sql)
+
+            column_names = [desc[0] for desc in cursor.description]
+            athlete_stats = {}
+
+            for row in cursor.fetchall():
+                row_dict = dict(zip(column_names, row))
+                athlete_stats[row_dict['goal_name']] = {
+                    "name": strava_goals[row_dict['goal_name']].value,
+                    "plan": row_dict["plan"],
+                    "current": row_dict["current"]
+                }
+
+            cursor.close()
+            self.cnx.close()
+            print(athlete_stats)
+            return athlete_stats
+        except Exception as ex:
+            self.app.config.logger.exception("Failed to load activities." + str(ex))
+            return dict()
+
     def save_athlete_stats(self, athlete_id: int, ytd_ride_current, ytd_ride_elev_current, goals: dict = None) -> bool:
         if not self.connect():
             return False
         try:
             # todo read current plan and scopes! Map them
             # read from this table
-            self.app.config.logger.exception("Saving athlete_stats.")
+            self.app.config.logger.debug("Saving athlete_stats.")
             cursor = self.cnx.cursor()
             query = "UPDATE athletes SET ytd_ride_current = %s, ytd_ride_elev_current = %s WHERE athlete_id = %s"
             cursor.execute(query, (ytd_ride_current, ytd_ride_elev_current, athlete_id))
             self.cnx.commit()
 
             if goals:
+                self.app.config.logger.debug("clearing current stats ...")
+                cursor = self.cnx.cursor()
+                query = "DELETE FROM goals WHERE athlete_id = " + str(athlete_id)
+                cursor.execute(query)
+                self.cnx.commit()
+
                 cursor = self.cnx.cursor()
                 goal_queries = []
                 for key, value in goals.items():
                     goal_queries.append((athlete_id, 'y', 0, key, round(value, 2)))
-
                 insert_query = "INSERT INTO goals (athlete_id, scope, plan, goal_name, current) VALUES (%s, %s, %s, %s, %s)"
+                self.app.config.logger.debug("inserting current stats ...")
                 cursor.executemany(insert_query, goal_queries)
                 self.cnx.commit()
 
             cursor.close()
             self.cnx.close()
+            self.app.config.logger.info("New athlete stats saved.")
             return True
         except Exception as ex:
             self.app.config.logger.exception("Failed to save athlete stats. " + str(ex))
