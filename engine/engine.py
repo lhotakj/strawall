@@ -2,6 +2,9 @@ import io
 import os
 import subprocess
 from pathlib import Path
+from unicodedata import decimal
+
+from helpers.strava_goals import StatsType
 from .render_mode import RenderMode
 
 
@@ -9,12 +12,14 @@ from PIL import Image, ImageDraw, ImageFont
 from flask import Flask, Response, send_file
 
 import helpers.mysql as database
+import helpers.strava_goals as strava_goals
 
 
 class Engine:
-    WIDGET_FONT_COLOR: str = "#fb5200"
-    WIDGET_FONT_COLOR_STROKE: str = "none"
-    WIDGET_FONT_STROKE_WIDTH: str = "0"
+    WIDGET_FONT_COLOR: str = "white"
+    WIDGET_FONT_COLOR_HIGHLIGHT: str = "#fc4c02"
+    WIDGET_FONT_COLOR_STROKE: str = "#222"
+    WIDGET_FONT_STROKE_WIDTH: str = "1"
 
     CANVAS_WIDTH: int = 1920
     CANVAS_HEIGHT: int = 1080
@@ -29,14 +34,21 @@ class Engine:
         self.app.config.logger.info(app.config.db)
         pass
 
-    def widget_ytd_ride_data(self) -> dict:
+    def widget_distance_elevation(self, activity_type: str, distance: StatsType, elevation: StatsType) -> dict:
         athlete_id: int = self.app.config.session_athlete_id
-        profile_info = self.db.load_profile(athlete_id)
-        return {"ytd_ride": profile_info["ytd_ride"],
-                "ytd_ride_current": profile_info["ytd_ride_current"],
-                "ytd_ride_elev_current": profile_info["ytd_ride_elev_current"],
-                "achieved": round(int(profile_info["ytd_ride_current"]) / int(profile_info["ytd_ride"]) * 1000) / 10,
-                "text": "ride"}
+        stats: dict = self.db.load_athlete_stats(athlete_id)
+        goal_yord: dict = stats[distance.name]
+        goal_yore: dict = stats[elevation.name]
+        goal_yord_unit: str = distance.value["unit"]
+        goal_yore_unit: str = elevation.value["unit"]
+        return {"goal_yord_plan": goal_yord["plan"],
+                "goal_yord_stat": goal_yord["stat"],
+                "goal_yore_plan": goal_yore["plan"],
+                "goal_yore_stat": goal_yore["stat"],
+                "goal_yord_unit": goal_yord_unit,
+                "goal_yore_unit": goal_yore_unit,
+                "achieved": round(float(goal_yord["stat"]) / float(goal_yord["plan"]) * 1000) / 10,
+                "activity_type": activity_type}
 
     def load_widget_template(self, widget_type):
         pwd: str = os.path.join(Path.cwd(), "engine", "html")
@@ -45,21 +57,23 @@ class Engine:
         data = {}
         if widget_type == "ytd_ride":
             file = "widgets/ytd.html"
-            data = self.widget_ytd_ride_data()
+            data = self.widget_distance_elevation(activity_type="ride",
+                                                  distance=strava_goals.StatsType.yord,
+                                                  elevation=strava_goals.StatsType.yore)
         if widget_type == "ride_stats":
-            file = "widgets/widget-ytd-ride-totals.html"
-            data = self.widget_ytd_ride_data()
+            file = "widgets/widget-ytd-ride-totals-simple.html"
+            data = self.widget_distance_elevation(activity_type="ride",
+                                                  distance=strava_goals.StatsType.yord,
+                                                  elevation=strava_goals.StatsType.yore)
         with open(pwd + "/" + file, "r") as f:
             html_data: str = f.read()
         for key, value in data.items():
-            print(key)
             html_data = html_data.replace('{{ ' + key + ' }}', str(value))
         return html_data
 
     # TODO next steps:
     # - move widgets to widgets
     # - parametrize location
-    # - finish source data (ytd, stats)
     # - optimize token handling
 
     def serve_error(self, message: str):
@@ -112,6 +126,7 @@ class Engine:
         self.html_data =self. html_data.replace('<widget id="widget-goal.html"></widget>', widget_goal)
         self.html_data = self.html_data.replace('<widget id="widget-stats.html"></widget>', widget_stats)
         self.html_data = self.html_data.replace('{{ widget_font_color }}', self.WIDGET_FONT_COLOR)
+        self.html_data = self.html_data.replace('{{ widget_font_color_highlight }}', self.WIDGET_FONT_COLOR_HIGHLIGHT)
         self.html_data = self.html_data.replace('{{ widget_font_color_stroke }}', self.WIDGET_FONT_COLOR_STROKE)
         self.html_data = self.html_data.replace('{{ widget_font_stroke_width }}', self.WIDGET_FONT_STROKE_WIDTH)
         self.html_data = self.html_data.replace('{{ canvas_width }}', str(self.CANVAS_WIDTH))

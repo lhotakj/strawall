@@ -1,5 +1,5 @@
-<canvas id="statsCanvas" width="900" height="120"
-        style="z-index: 100; position: absolute; left:1390px; top:10px"></canvas>
+<canvas id="statsCanvas" width="1000" height="120"
+        style="z-index: 100; position: absolute; left:1350px; top:10px"></canvas>
 <script>
     window.addEventListener('load', function () {
         var canvasStats = document.getElementById('statsCanvas');
@@ -9,8 +9,10 @@
 
         var centerXStats = canvasStats.width / 2;
 
-        var ytd_ride_current = ({{ ytd_ride_current }} / 1000).toFixed(1).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        var ytd_ride_elev_current = ({{ ytd_ride_elev_current }} / 1).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        var goal_yord_stat = ({{ goal_yord_stat }} / 1).toFixed(1).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        var goal_yore_stat = ({{ goal_yore_stat }} / 1).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        var goal_yord_unit = '{{ goal_yord_unit }}'
+        var goal_yore_unit = '{{ goal_yore_unit }}'
 
         // Draw distance
         var textDescriptionTop = canvasStats.height * 0.48;
@@ -21,8 +23,8 @@
         // Stroke
         contextStats.strokeStyle = '{{ widget_font_color_stroke }}';
         contextStats.lineWidth = {{ widget_font_stroke_width }};
-        contextStats.strokeText('total distance: ' + ytd_ride_current + ' km', centerXStats, textDescriptionTop);
-        contextStats.fillText('total distance: ' + ytd_ride_current + 'km', centerXStats, textDescriptionTop);
+        contextStats.strokeText('total distance: ' + goal_yord_stat + ' ' + goal_yord_unit, centerXStats, textDescriptionTop);
+        contextStats.fillText('total distance: ' + goal_yord_stat + ' ' + goal_yord_unit, centerXStats, textDescriptionTop);
 
         // Draw elevation
         var textElevationTop = canvasStats.height * 0.48 + 50;
@@ -33,8 +35,8 @@
         // Stroke
         contextStats.strokeStyle = '{{ widget_font_color_stroke }}';
         contextStats.lineWidth = {{ widget_font_stroke_width }};
-        contextStats.strokeText('total elevation: ' + ytd_ride_elev_current + ' m', centerXStats, textElevationTop);
-        contextStats.fillText('total elevation: ' + ytd_ride_elev_current + ' m', centerXStats, textElevationTop);
+        contextStats.strokeText('total elevation: ' + goal_yore_stat + ' ' + goal_yore_unit, centerXStats, textElevationTop);
+        contextStats.fillText('total elevation: ' + goal_yore_stat + ' ' + goal_yore_unit, centerXStats, textElevationTop);
 
     });
 </script>

@@ -186,11 +186,8 @@ def profile():
     athlete_info = app.config.client.get_athlete()
     app.config.logger.debug("profile / athlete: " + str(athlete_info))
     athlete_stats = app.config.client.get_athlete_stats(athlete_info.id)
-    profile_info = app.config.db.load_profile(athlete_info.id)
-    app.config.db.load_athlete_stats(athlete_info.id)
-    return render_template('profile.html', athlete_stats=athlete_stats, athlete=athlete_info, profile=profile_info)
-
-
+    goals = app.config.db.load_athlete_stats(athlete_info.id)
+    return render_template('profile.html', athlete_stats=athlete_stats, athlete=athlete_info, goals=goals)
 
 @app.route('/activities_js')
 @auth_route

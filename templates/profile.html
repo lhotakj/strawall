@@ -5,7 +5,7 @@
     <title>Athlete Stats</title>
 </head>
 <body>
-    <h1>Athlete Stats</h1>
+    <h1>Athlete Details</h1>
     <table border="1">
         <tr>
             <th>Name</th>
@@ -23,39 +23,28 @@
             <th>Country</th>
             <td>{{ athlete.country }}</td>
         </tr>
-        <tr>
-            <th>Year-to-date Ride Distance</th>
-            <td>
-                {{ profile.ytd_ride_current }} / {{ profile.ytd_ride }} meters
-                {% if profile.ytd_ride > 0 %}
-                    ({{ (athlete_stats.ytd_ride_totals.distance / profile.ytd_ride) * 100 | round(2) }}%)
-                {% else %}
-                    (-)
-                {% endif %}
-            </td>
-        </tr>
-        <tr>
-            <th>Year-to-date Run Distance</th>
-            <td>
-                {{ athlete_stats.ytd_run_totals.distance }} / {{ profile.ytd_run }} meters
-                {% if profile.ytd_run > 0 %}
-                    ({{ (athlete_stats.ytd_run_totals.distance / profile.ytd_run) * 100 | round(2) }}%)
-                {% else %}
-                    (-)
-                {% endif %}
-            </td>
-        </tr>
-        <tr>
-            <th>Year-to-date Swim Distance</th>
-            <td>
-                {{ athlete_stats.ytd_swim_totals.distance }} / {{ profile.ytd_swim }} meters
-                {% if profile.ytd_swim > 0 %}
-                    ({{ (athlete_stats.ytd_swim_totals.distance / profile.ytd_swim) * 100 | round(2) }}%)
-                {% else %}
-                    (-)
-                {% endif %}
-            </td>
-        </tr>
     </table>
+
+    <h1>Set Strawall goals</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Plan</th>
+                <th>Current</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for goal_id, detail in goals.items() %}
+            <tr>
+                <td>{{ detail.name }}</td>
+                <td>{{ detail.plan }}</td>
+                <td>{{ detail.stat }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+
 </body>
 </html>

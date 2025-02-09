@@ -118,8 +118,6 @@ class Strava:
         )
 
         self.app.config.db.save_athlete_stats(self.app.config.session_athlete_id,
-                                     ytd_ride_current,
-                                     ytd_ride_elev_current,
                                      {
                                          strava_goals.yord.name: ytd_ride_current,
                                          strava_goals.yore.name: ytd_ride_elev_current,

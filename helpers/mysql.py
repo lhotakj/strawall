@@ -155,12 +155,25 @@ class Database(interface_database.Database):
             self.app.config.logger.exception("Failed to save activities." + str(ex))
             return []
 
-    # TODO: split goals and current!
-    def load_athlete_stats(self, athlete_id: int) -> dict:
-        if not self.connect(): return dict()
+    def load_athlete_stats(self, athlete_id: int) -> dict|None:
+        if not self.connect(): return None
         try:
             cursor = self.cnx.cursor()
-            sql: str = "SELECT * FROM goals WHERE athlete_id = %d" % athlete_id
+            sql: str = """SELECT
+                            gp.athlete_id,
+                            gp.goal_name,
+                            gp.plan,
+                            gs.stat
+                        FROM
+                            goals_plans gp
+                        INNER JOIN
+                            goals_stats gs
+                        ON
+                            gp.athlete_id = gs.athlete_id
+                            AND gp.goal_name = gs.goal_name
+                        WHERE
+                            gp.athlete_id = %d AND gp.plan is not null
+                        """ % athlete_id
             self.app.config.logger.info("load sql: " + sql)
             cursor.execute(sql)
 
@@ -169,76 +182,50 @@ class Database(interface_database.Database):
 
             for row in cursor.fetchall():
                 row_dict = dict(zip(column_names, row))
+                strava_goal: dict = strava_goals[row_dict['goal_name']].value # get meta info on goal
                 athlete_stats[row_dict['goal_name']] = {
-                    "name": strava_goals[row_dict['goal_name']].value,
-                    "plan": row_dict["plan"],
-                    "current": row_dict["current"]
+                    "name": strava_goal['name'],
+                    "plan": str(round(number=row_dict["plan"]/strava_goal['scale'], ndigits=0)),
+                    "stat": str(round(number=row_dict["stat"]/strava_goal['scale'], ndigits=strava_goal['decimal']))
                 }
-
             cursor.close()
             self.cnx.close()
-            print(athlete_stats)
             return athlete_stats
         except Exception as ex:
             self.app.config.logger.exception("Failed to load activities." + str(ex))
-            return dict()
+            return None
 
-    def save_athlete_stats(self, athlete_id: int, ytd_ride_current, ytd_ride_elev_current, goals: dict = None) -> bool:
+    def save_athlete_stats(self, athlete_id: int, goals: dict = None) -> bool:
         if not self.connect():
             return False
         try:
             # todo read current plan and scopes! Map them
             # read from this table
             self.app.config.logger.debug("Saving athlete_stats.")
+            # cursor = self.cnx.cursor()
+            # query = "UPDATE athletes SET ytd_ride_current = %s, ytd_ride_elev_current = %s WHERE athlete_id = %s"
+            # cursor.execute(query, (ytd_ride_current, ytd_ride_elev_current, athlete_id))
+            # self.cnx.commit()
+
+            self.app.config.logger.debug("clearing current stats ...")
             cursor = self.cnx.cursor()
-            query = "UPDATE athletes SET ytd_ride_current = %s, ytd_ride_elev_current = %s WHERE athlete_id = %s"
-            cursor.execute(query, (ytd_ride_current, ytd_ride_elev_current, athlete_id))
+            query = "DELETE FROM goals_stats WHERE athlete_id = " + str(athlete_id)
+            cursor.execute(query)
             self.cnx.commit()
 
-            if goals:
-                self.app.config.logger.debug("clearing current stats ...")
-                cursor = self.cnx.cursor()
-                query = "DELETE FROM goals WHERE athlete_id = " + str(athlete_id)
-                cursor.execute(query)
-                self.cnx.commit()
-
-                cursor = self.cnx.cursor()
-                goal_queries = []
-                for key, value in goals.items():
-                    goal_queries.append((athlete_id, 'y', 0, key, round(value, 2)))
-                insert_query = "INSERT INTO goals (athlete_id, scope, plan, goal_name, current) VALUES (%s, %s, %s, %s, %s)"
-                self.app.config.logger.debug("inserting current stats ...")
-                cursor.executemany(insert_query, goal_queries)
-                self.cnx.commit()
-
+            cursor = self.cnx.cursor()
+            goal_queries = []
+            for key, value in goals.items():
+                goal_queries.append((athlete_id, key, round(value, 2)))
+            insert_query = "INSERT INTO goals_stats (athlete_id, goal_name, stat) VALUES (%s, %s, %s)"
+            self.app.config.logger.debug("inserting current stats ...")
+            cursor.executemany(insert_query, goal_queries)
+            self.cnx.commit()
             cursor.close()
             self.cnx.close()
             self.app.config.logger.info("New athlete stats saved.")
             return True
+
         except Exception as ex:
             self.app.config.logger.exception("Failed to save athlete stats. " + str(ex))
             return False
-
-    def load_profile(self, athlete_id) -> dict | None:
-        if not self.connect(): return []
-        try:
-            cursor = self.cnx.cursor()
-            cursor.execute(
-                "SELECT ytd_ride, ytd_run, ytd_swim, ytd_ride_current, ytd_ride_elev_current  FROM athletes WHERE athlete_id = " + str(athlete_id) + "")
-            result = cursor.fetchone()
-            cursor.close()
-            self.cnx.close()
-            print(result)
-            if result:
-                return {"ytd_ride": int(result[0]),
-                        "ytd_run": int(result[1]),
-                        "ytd_swim": int(result[2]),
-                        "ytd_ride_current": int(result[3]),
-                        "ytd_ride_elev_current": int(result[4])}
-            else:
-                self.app.config.logger.warning("No result.")
-                return None
-
-        except Exception as ex:
-            self.app.config.logger.exception("Failed to load profile." + str(ex))
-            return []
