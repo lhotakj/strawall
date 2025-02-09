@@ -51,6 +51,8 @@ class Database(interface_database.Database):
                 user=self.user,
                 password=self.password,
                 database=self.database,
+                charset="utf8mb4",
+                collation="utf8mb4_unicode_ci"
             )
             return True
         except mysql.connector.Error as err:

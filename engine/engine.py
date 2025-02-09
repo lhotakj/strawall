@@ -37,6 +37,7 @@ class Engine:
     def widget_distance_elevation(self, activity_type: str, distance: StatsType, elevation: StatsType) -> dict:
         athlete_id: int = self.app.config.session_athlete_id
         stats: dict = self.db.load_athlete_stats(athlete_id)
+        print(stats)
         goal_yord: dict = stats[distance.name]
         goal_yore: dict = stats[elevation.name]
         goal_yord_unit: str = distance.value["unit"]
