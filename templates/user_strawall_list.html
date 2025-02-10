@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='datatables/datatables.min.css') }}">
     <script src="{{ url_for('static', filename='datatables/datatables.min.js') }}"></script>
+    <script src="https://kit.fontawesome.com/2e8577682b.js" crossorigin="anonymous"></script>
     <style>
         .loading-box {
             background-color: #f0f0f0;
@@ -48,7 +49,7 @@
             border: 4px !important;
         }
         .fixed-width-table {
-            width: 610px !important; /* Adjust this width to match the total of column widths */
+            width: 510px !important; /* Adjust this width to match the total of column widths */
             table-layout: fixed;
             margin: 0 !important; /* Prevent table from being centered */
         }
@@ -74,7 +75,7 @@
             <th style="width: 250px">Name</th>
             <th style="width: 80px">Width</th>
             <th style="width: 80px">Height</th>
-            <th style="width: 200px">Guid</th>
+            <th style="width: 100px">Edit</th> <!-- New Edit column -->
         </tr>
     </thead>
     <tbody>
@@ -95,6 +96,7 @@
 
 <script>
     $(document).ready(function() {
+        var userId = 123
         var table = new DataTable('#strawalls', {
             ajax: {
                 url: '/api/strawalls.json',
@@ -108,7 +110,15 @@
                 { data: 'name', width: '250px' },
                 { data: 'width', width: '80px' },
                 { data: 'height', width: '80px' },
-                { data: 'strawall_guid', width: '200px' },
+                {
+                    data: null,
+                    width: '100px',
+                    render: function(data, type, row) {
+                        var strawallGuid = row.strawall_guid;
+                        var url = '/strawalls/' + userId + '/' + strawallGuid;
+                        return '<a href="' + url + '"><i class="fa-regular fa-pen-to-square"></i> Edit</a>';
+                    }
+                }
             ],
             order: [[1, 'desc']],
             searching: false, // Disable the search box
