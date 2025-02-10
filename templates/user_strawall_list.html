@@ -193,7 +193,7 @@
                     openModal(name, function (result) {
                         if (result) {
                             console.log("Item deleted");
-                            redirectToPage('{{ url_for('user_strawall_list') }}', 'POST', { "delete": guid });
+                            redirectToPage('{{ url_for('api_strawalls') }}', 'POST', { "delete": guid });
                         } else {
                             console.log("Item not deleted");
                         }
@@ -274,35 +274,23 @@
     }
 
     function redirectToPage(url, method, data) {
-        // Create a form element
-        var form = $('<form>', {
-            'action': url,      // URL to redirect to
-            'method': method    // method
-        });
-
-        // Append the data to the form
-        for (var key in data) {
-            if (data.hasOwnProperty(key)) {
-                $('<input>', {
-                    'type': 'hidden',
-                    'name': key,
-                    'value': data[key]
-                }).appendTo(form);
+        $.ajax({
+            url: url,
+            type: method,
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            success: function (response) {
+                window.location.reload();
+            },
+            error: function (xhr, status, error) {
+                console.error("Error:", error);
             }
-        }
-
-        // Append the form to the body and submit it
-        form.appendTo('body');
-        form.submit();
+        });
     }
 
 
 
 </script>
-
-<button id="openModalBtn">Open Modal</button>
-
-
 
 </body>
 </html>

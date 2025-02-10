@@ -195,15 +195,22 @@ def profile():
 def activities_js():
     return render_template('activities_js.html')
 
+
 @app.route('/user_strawall_list')
 @auth_route
 def user_strawall_list():
     return render_template('user_strawall_list.html', athlete_id=app.config.session_athlete_id)
 
-@app.route('/api/strawalls.json')
+@app.route('/api/strawalls.json', methods=['GET', 'POST'])
 def api_strawalls():
     app.config.logger.info("api_strawalls()")
     auth_strava()
+
+    if request.method == 'POST':
+        data = request.get_json()
+        if 'delete' in data:
+            app.config.logger.info(f"Deleting strawall: {data['delete']}")
+
     loaded_strawalls: list = app.config.db.load_strawalls(app.config.session_athlete_id)
 
     def create_strawall_url(strawall):
