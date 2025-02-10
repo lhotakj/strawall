@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>List of Strawalls</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='datatables/datatables.min.css') }}">
+    <script src="{{ url_for('static', filename='datatables/datatables.min.js') }}"></script>
+    <style>
+        .loading-box {
+            background-color: #f0f0f0;
+            width: 100%;
+            height: 1.7em;
+            animation: pulse 1s infinite;
+            border-radius: 9px;
+            padding-left: 10px;
+            padding-right: 10px;
+            display: flex;
+            align-items: flex-end;
+            vertical-align: bottom;
+        }
+        @keyframes pulse {
+            0% {
+                background-color: #f0f0f0;
+            }
+            50% {
+                background-color: #d0d0d0;
+            }
+            100% {
+                background-color: #f0f0f0;
+            }
+        }
+
+        table {
+            border-collapse: separate !important; /* Ensures that border-spacing property is applied */
+            border-spacing: 10px !important; /* Adjust this value to set the desired cell spacing */
+        }
+
+        table.dataTable th, table.dataTable td, table.dataTable tr,table.dataTable thead {
+            height: 2em !important;
+            border-left: 4px !important;
+        }
+
+        table.dataTable thead {
+            height: 2.3em !important;
+            border: 4px !important;
+        }
+        .fixed-width-table {
+            width: 610px !important; /* Adjust this width to match the total of column widths */
+            table-layout: fixed;
+            margin: 0 !important; /* Prevent table from being centered */
+        }
+
+        .dt-container {
+            margin-left: 0 !important;
+            margin-right: auto !important;
+        }
+
+        .mt-2 {
+            margin-top: 0 !important;
+        }
+
+    </style>
+</head>
+<body>
+<h1>Your Strawalls</h1>
+
+
+<table id="strawalls" class="display fixed-width-table">
+    <thead class="thead">
+        <tr>
+            <th style="width: 250px">Name</th>
+            <th style="width: 80px">Width</th>
+            <th style="width: 80px">Height</th>
+            <th style="width: 200px">Guid</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr id="loading">
+            <td><div class="loading-box" ></div></td>
+            <td><div class="loading-box" ></div></td>
+            <td><div class="loading-box" ></div></td>
+            <td><div class="loading-box" ></div></td>
+        </tr>
+        <tr id="loading">
+            <td><div class="loading-box" ></div></td>
+            <td><div class="loading-box" ></div></td>
+            <td><div class="loading-box" ></div></td>
+            <td><div class="loading-box" ></div></td>
+        </tr>
+    </tbody>
+</table>
+
+<script>
+    $(document).ready(function() {
+        var table = new DataTable('#strawalls', {
+            ajax: {
+                url: '/api/strawalls.json',
+                dataSrc: function(json) {
+                    $('#loading').hide();
+                    $('#strawalls').show();
+                    return json.data;  // Adjust this if your JSON structure is different
+                }
+            },
+            columns: [
+                { data: 'name', width: '250px' },
+                { data: 'width', width: '80px' },
+                { data: 'height', width: '80px' },
+                { data: 'strawall_guid', width: '200px' },
+            ],
+            order: [[1, 'desc']],
+            searching: false, // Disable the search box
+            paging: false,
+            info: false, // Disable the "Showing ..." information
+            autoWidth: false, // Disable automatic column width calculation
+            fixedColumns: true // Enable fixed columns
+        });
+
+        table.draw();
+    });
+</script>
+
+</body>
+</html>

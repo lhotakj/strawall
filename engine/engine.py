@@ -110,9 +110,6 @@ class Engine:
         widget_goal = self.load_widget_template("ytd_ride")
         widget_stats: str = self.load_widget_template("ride_stats")
 
-        # with open(pwd + "/widget-stats.html", "r") as f:
-        #     widget_stats: str = f.read()
-
         path: str = ""
         if mode == RenderMode.IMAGE:
             path = pwd

@@ -130,6 +130,33 @@ class Database(interface_database.Database):
             self.app.config.logger.exception("Failed to load activities." + str(ex))
             return []
 
+    def load_strawalls(self, athlete_id) -> list:
+        self.app.logger.info("loading info for athlete_id: " + str(athlete_id))
+        if not self.connect(): return []
+        try:
+            cursor = self.cnx.cursor()
+            sql: str = "SELECT strawall_id, strawall_guid, name, width, height, active FROM strawalls WHERE athlete_id = " + str(
+                athlete_id) + " ORDER BY name ASC"
+            self.app.config.logger.info("loading: " + sql)
+            cursor.execute(sql)
+            strawalls: list = []
+            for row in cursor.fetchall():
+                strawalls.append({
+                    "strawall_id": row[0],
+                    "strawall_guid": row[1],
+                    "name": row[2],
+                    "width": row[3],
+                    "height": row[4],
+                    "active": row[5],
+                })
+            cursor.close()
+            self.cnx.close()
+            return strawalls
+        except Exception as ex:
+            self.app.config.logger.exception("Failed to load strawalls." + str(ex))
+            return []
+
+
     def save_activities_cache(self, athlete_id, activities):
         if not self.connect(): return []
         try:

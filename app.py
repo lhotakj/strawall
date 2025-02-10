@@ -194,6 +194,19 @@ def profile():
 def activities_js():
     return render_template('activities_js.html')
 
+@app.route('/user_strawall_list')
+@auth_route
+def user_strawall_list():
+    return render_template('user_strawall_list.html')
+
+@app.route('/api/strawalls.json')
+def api_strawalls():
+    app.config.logger.info("api_strawalls()")
+    auth_strava()
+    loaded_strawalls: list = app.config.db.load_strawalls(app.config.session_athlete_id)
+    strawalls: dict = { "data": loaded_strawalls }
+    return strawalls
+
 
 @app.route('/api/activities.json')
 def api_activities():
