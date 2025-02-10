@@ -7,8 +7,10 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='datatables/datatables.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}">
     <script src="{{ url_for('static', filename='datatables/datatables.min.js') }}"></script>
     <script src="https://kit.fontawesome.com/2e8577682b.js" crossorigin="anonymous"></script>
+<!--    <script src="{{ url_for('static', filename='js/modal.js') }}"></script> -->
     <style>
         .loading-box {
             background-color: #f0f0f0;
@@ -68,6 +70,20 @@
 <body>
 <h1>Your Strawalls</h1>
 
+<!-- The Modal -->
+<div id="deleteModal" class="modal">
+
+  <!-- Modal content -->
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <p>Do you want to delete <span id="itemName"></span>?</p>
+        <div style="text-align: center">
+            <button id="yesBtn"><i class="fa-solid fa-check"></i> Yes</button>
+            <button id="noBtn"><i class="fa-solid fa-xmark"></i> No</button>
+        </div>
+    </div>
+
+</div>
 
 <table id="strawalls" class="display fixed-width-table">
     <thead class="thead">
@@ -75,7 +91,10 @@
             <th style="width: 250px">Name</th>
             <th style="width: 80px">Width</th>
             <th style="width: 80px">Height</th>
-            <th style="width: 100px">Edit</th> <!-- New Edit column -->
+            <th style="width: 80px"></th>
+            <th style="width: 80px"></th>
+            <th style="width: 100px"></th>
+            <th style="width: 260px"></th>
         </tr>
     </thead>
     <tbody>
@@ -84,8 +103,14 @@
             <td><div class="loading-box" ></div></td>
             <td><div class="loading-box" ></div></td>
             <td><div class="loading-box" ></div></td>
+            <td><div class="loading-box" ></div></td>
+            <td><div class="loading-box" ></div></td>
+            <td><div class="loading-box" ></div></td>
         </tr>
         <tr id="loading">
+            <td><div class="loading-box" ></div></td>
+            <td><div class="loading-box" ></div></td>
+            <td><div class="loading-box" ></div></td>
             <td><div class="loading-box" ></div></td>
             <td><div class="loading-box" ></div></td>
             <td><div class="loading-box" ></div></td>
@@ -96,7 +121,8 @@
 
 <script>
     $(document).ready(function() {
-        var userId = 123
+
+        var athlete_id = '{{ athlete_id }}'
         var table = new DataTable('#strawalls', {
             ajax: {
                 url: '/api/strawalls.json',
@@ -107,16 +133,50 @@
                 }
             },
             columns: [
-                { data: 'name', width: '250px' },
-                { data: 'width', width: '80px' },
-                { data: 'height', width: '80px' },
+                { data: 'name', width: '250px', orderable: true },
+                { data: 'width', width: '80px', orderable: true },
+                { data: 'height', width: '80px', orderable: true  },
+                {
+                    data: null,
+                    width: '80px',
+                    orderable: false,
+                    render: function(data, type, row) {
+                        var strawallGuid = row.strawall_guid;
+                        var url = '/user/strawalls/edit/' + strawallGuid;
+                        return '<a href="' + url + '"><i class="fa-regular fa-pen-to-square"></i> Edit</a>';
+                    }
+                },
                 {
                     data: null,
                     width: '100px',
+                    orderable: false,
                     render: function(data, type, row) {
                         var strawallGuid = row.strawall_guid;
-                        var url = '/strawalls/' + userId + '/' + strawallGuid;
-                        return '<a href="' + url + '"><i class="fa-regular fa-pen-to-square"></i> Edit</a>';
+                        var nameUrl = row.name_url;
+                        var url = '/strawalls/' + athlete_id + '/' + nameUrl + '.png';
+                        return '<button class="button_view"  data-redirect="' + url + '"><i class="fa-regular fa-eye"></i> View</button>';
+                    }
+                },
+                {
+                    data: null,
+                    width: '110px',
+                    orderable: false,
+                    render: function(data, type, row) {
+                        var strawallGuid = row.strawall_guid;
+                        var nameUrl = row.name_url;
+                        var url = '/strawalls/' + athlete_id + '/' + nameUrl + '.png';
+                        return '<button class="button_delete" data-guid="'+strawallGuid+'" data-name="'+row.name+'"><i class="fa-regular fa-trash-can"></i> Delete</button>';
+                    }
+                },
+                {
+                    data: null,
+                    width: '260px',
+                    orderable: false,
+                    render: function(data, type, row) {
+                        var strawallGuid = row.strawall_guid;
+                        var nameUrl = row.name_url;
+                        var url = '/strawalls/' + athlete_id + '/' + nameUrl + '.png';
+                        return '<button class="button_copy" data-url="'+url+'"><i class="fa-regular fa-clipboard"></i> Copy URL to clipboard</button>';
                     }
                 }
             ],
@@ -125,12 +185,124 @@
             paging: false,
             info: false, // Disable the "Showing ..." information
             autoWidth: false, // Disable automatic column width calculation
-            fixedColumns: true // Enable fixed columns
+            fixedColumns: true, // Enable fixed columns
+            initComplete: function(settings, json) {
+                $(".button_delete").on('click', function() {
+                    guid = $(this).data("guid")
+                    name = $(this).data("name")
+                    openModal(name, function (result) {
+                        if (result) {
+                            console.log("Item deleted");
+                            redirectToPage('{{ url_for('user_strawall_list') }}', 'POST', { "delete": guid });
+                        } else {
+                            console.log("Item not deleted");
+                        }
+                    });
+                });
+                $(".button_copy").on('click', function() {
+                    var url = $(this).data("url");
+                    addClipboard(url)
+                });
+
+            }
         });
 
         table.draw();
+
     });
+
+
+    function addClipboard(url) {
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(url).then(function() {
+                console.log('URL copied to clipboard: ' + url);
+                alert('URL copied to clipboard!');
+            }).catch(function(err) {
+                console.error('Failed to copy URL: ', err);
+                alert('Failed to copy URL to clipboard.');
+            });
+        } else {
+            // Fallback for older browsers
+            var textArea = document.createElement("textarea");
+            textArea.value = url;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                console.log('URL copied to clipboard: ' + url);
+                alert('URL copied to clipboard!');
+            } catch (err) {
+                console.error('Failed to copy URL: ', err);
+                alert('Failed to copy URL to clipboard.');
+            }
+            document.body.removeChild(textArea);
+        }
+    }
+
+    function openModal(itemName, callback) {
+        var $modal = $('#deleteModal');
+        var $itemName = $('#itemName');
+
+        $itemName.html("<b>" + itemName + "</b>");
+        $modal.show();
+
+        // Handle Yes button click
+        $('#yesBtn').off('click').on('click', function() {
+            $modal.hide();
+            callback(true); // Return true on Yes
+        });
+
+        // Handle No button click
+        $('#noBtn').off('click').on('click', function() {
+            $modal.hide();
+            callback(false); // Return false on No
+        });
+
+        // Handle close button click
+        $('.close').off('click').on('click', function() {
+            $modal.hide();
+            callback(false); // Return false on close
+        });
+
+        // Handle click outside of the modal
+        $(window).off('click').on('click', function(event) {
+            if (event.target === $modal[0]) {
+                $modal.hide();
+                callback(false); // Return false on outside click
+            }
+        });
+    }
+
+    function redirectToPage(url, method, data) {
+        // Create a form element
+        var form = $('<form>', {
+            'action': url,      // URL to redirect to
+            'method': method    // method
+        });
+
+        // Append the data to the form
+        for (var key in data) {
+            if (data.hasOwnProperty(key)) {
+                $('<input>', {
+                    'type': 'hidden',
+                    'name': key,
+                    'value': data[key]
+                }).appendTo(form);
+            }
+        }
+
+        // Append the form to the body and submit it
+        form.appendTo('body');
+        form.submit();
+    }
+
+
+
 </script>
+
+<button id="openModalBtn">Open Modal</button>
+
+
 
 </body>
 </html>

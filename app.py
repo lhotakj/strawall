@@ -14,6 +14,7 @@ import helpers.mysql as database
 import helpers.strava as strava
 from engine.engine import Engine
 from engine.render_mode import RenderMode
+from helpers import make_url_compatible
 
 app = Flask(__name__)
 
@@ -197,13 +198,19 @@ def activities_js():
 @app.route('/user_strawall_list')
 @auth_route
 def user_strawall_list():
-    return render_template('user_strawall_list.html')
+    return render_template('user_strawall_list.html', athlete_id=app.config.session_athlete_id)
 
 @app.route('/api/strawalls.json')
 def api_strawalls():
     app.config.logger.info("api_strawalls()")
     auth_strava()
     loaded_strawalls: list = app.config.db.load_strawalls(app.config.session_athlete_id)
+
+    def create_strawall_url(strawall):
+        strawall["name_url"] = make_url_compatible(strawall["name"])
+        return strawall
+
+    loaded_strawalls = list(map(create_strawall_url, loaded_strawalls))
     strawalls: dict = { "data": loaded_strawalls }
     return strawalls
 
