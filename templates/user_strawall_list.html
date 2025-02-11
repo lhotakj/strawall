@@ -7,65 +7,9 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='datatables/datatables.min.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/datatable.css') }}">
     <script src="{{ url_for('static', filename='datatables/datatables.min.js') }}"></script>
     <script src="https://kit.fontawesome.com/2e8577682b.js" crossorigin="anonymous"></script>
-<!--    <script src="{{ url_for('static', filename='js/modal.js') }}"></script> -->
-    <style>
-        .loading-box {
-            background-color: #f0f0f0;
-            width: 100%;
-            height: 1.7em;
-            animation: pulse 1s infinite;
-            border-radius: 9px;
-            padding-left: 10px;
-            padding-right: 10px;
-            display: flex;
-            align-items: flex-end;
-            vertical-align: bottom;
-        }
-        @keyframes pulse {
-            0% {
-                background-color: #f0f0f0;
-            }
-            50% {
-                background-color: #d0d0d0;
-            }
-            100% {
-                background-color: #f0f0f0;
-            }
-        }
-
-        table {
-            border-collapse: separate !important; /* Ensures that border-spacing property is applied */
-            border-spacing: 10px !important; /* Adjust this value to set the desired cell spacing */
-        }
-
-        table.dataTable th, table.dataTable td, table.dataTable tr,table.dataTable thead {
-            height: 2em !important;
-            border-left: 4px !important;
-        }
-
-        table.dataTable thead {
-            height: 2.3em !important;
-            border: 4px !important;
-        }
-        .fixed-width-table {
-            width: 510px !important; /* Adjust this width to match the total of column widths */
-            table-layout: fixed;
-            margin: 0 !important; /* Prevent table from being centered */
-        }
-
-        .dt-container {
-            margin-left: 0 !important;
-            margin-right: auto !important;
-        }
-
-        .mt-2 {
-            margin-top: 0 !important;
-        }
-
-    </style>
 </head>
 <body>
 <h1>Your Strawalls</h1>
@@ -91,26 +35,11 @@
             <th style="width: 250px">Name</th>
             <th style="width: 80px">Width</th>
             <th style="width: 80px">Height</th>
-            <th style="width: 80px"></th>
-            <th style="width: 80px"></th>
-            <th style="width: 100px"></th>
-            <th style="width: 260px"></th>
+            <th style="width: 490px">Actions</th>
         </tr>
     </thead>
     <tbody>
         <tr id="loading">
-            <td><div class="loading-box" ></div></td>
-            <td><div class="loading-box" ></div></td>
-            <td><div class="loading-box" ></div></td>
-            <td><div class="loading-box" ></div></td>
-            <td><div class="loading-box" ></div></td>
-            <td><div class="loading-box" ></div></td>
-            <td><div class="loading-box" ></div></td>
-        </tr>
-        <tr id="loading">
-            <td><div class="loading-box" ></div></td>
-            <td><div class="loading-box" ></div></td>
-            <td><div class="loading-box" ></div></td>
             <td><div class="loading-box" ></div></td>
             <td><div class="loading-box" ></div></td>
             <td><div class="loading-box" ></div></td>
@@ -138,49 +67,23 @@
                 { data: 'height', width: '80px', orderable: true  },
                 {
                     data: null,
-                    width: '80px',
+                    width: '490px',
                     orderable: false,
                     render: function(data, type, row) {
                         var strawallGuid = row.strawall_guid;
-                        var url = '/user/strawalls/edit/' + strawallGuid;
-                        return '<a href="' + url + '"><i class="fa-regular fa-pen-to-square"></i> Edit</a>';
-                    }
-                },
-                {
-                    data: null,
-                    width: '100px',
-                    orderable: false,
-                    render: function(data, type, row) {
-                        var strawallGuid = row.strawall_guid;
+                        var url_edit = '/user/strawalls/edit/' + strawallGuid;
                         var nameUrl = row.name_url;
-                        var url = '/strawalls/' + athlete_id + '/' + nameUrl + '.png';
-                        return '<button class="button_view"  data-redirect="' + url + '"><i class="fa-regular fa-eye"></i> View</button>';
-                    }
-                },
-                {
-                    data: null,
-                    width: '110px',
-                    orderable: false,
-                    render: function(data, type, row) {
-                        var strawallGuid = row.strawall_guid;
-                        var nameUrl = row.name_url;
-                        var url = '/strawalls/' + athlete_id + '/' + nameUrl + '.png';
-                        return '<button class="button_delete" data-guid="'+strawallGuid+'" data-name="'+row.name+'"><i class="fa-regular fa-trash-can"></i> Delete</button>';
-                    }
-                },
-                {
-                    data: null,
-                    width: '260px',
-                    orderable: false,
-                    render: function(data, type, row) {
-                        var strawallGuid = row.strawall_guid;
-                        var nameUrl = row.name_url;
-                        var url = '/strawalls/' + athlete_id + '/' + nameUrl + '.png';
-                        return '<button class="button_copy" data-url="'+url+'"><i class="fa-regular fa-clipboard"></i> Copy URL to clipboard</button>';
+                        var url_view = '/strawalls/' + strawallGuid + '/' + nameUrl + '.png';
+                        var url_copy = window.location.origin + '/strawalls/' + strawallGuid + '/' + nameUrl + '.png';
+
+                        return '<button class="button_edit"  data-url="' + url_edit + '"><i class="fa-regular fa-pen-to-square"></i> Edit</button> ' +
+                               '<button class="button_view"  data-redirect="' + url_view + '"><i class="fa-regular fa-eye"></i> View</button> ' +
+                               '<button class="button_delete" data-guid="'+ strawallGuid +'"><i class="fa-regular fa-trash-can"></i> Delete</button> ' +
+                               '<button class="button_copy" data-url="' + url_copy +'"><i class="fa-regular fa-clipboard"></i> Copy URL to clipboard</button> ';
                     }
                 }
             ],
-            order: [[1, 'desc']],
+            order: [[0, 'asc']],
             searching: false, // Disable the search box
             paging: false,
             info: false, // Disable the "Showing ..." information
@@ -200,8 +103,13 @@
                     });
                 });
                 $(".button_copy").on('click', function() {
-                    var url = $(this).data("url");
-                    addClipboard(url)
+                    addClipboard($(this).data("url"));
+                });
+                $(".button_edit").on('click', function() {
+                    window.location.href = $(this).data("url");
+                });
+                $(".button_view").on('click', function() {
+                    window.location.href = $(this).data("redirect");
                 });
 
             }

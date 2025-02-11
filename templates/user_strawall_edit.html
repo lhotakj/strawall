@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>List of Strawalls</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='datatables/datatables.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/datatable.css') }}">
+    <script src="{{ url_for('static', filename='datatables/datatables.min.js') }}"></script>
+    <script src="https://kit.fontawesome.com/2e8577682b.js" crossorigin="anonymous"></script>
+</head>
+    <style>
+
+        .glow-on-focus {
+            width: 100%;
+            max-width: 300px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: box-shadow 0.3s, border-color 0.3s;
+        }
+
+        .glow-on-focus:focus {
+            border-color: #66afe9;
+            box-shadow: 0 0 10px rgba(102, 175, 233, 0.8);
+            outline: none;
+        }
+
+        input[type="text"] {
+            border: 1px solid black;
+            border-radius: 4px;
+            padding: 3px;
+            padding-left:6px;
+            padding-right:6px;
+              }
+
+        .number-input {
+            position: relative;
+            display: inline-block;
+            width: 80px;
+            padding-right:3px;
+        }
+
+        .number-input input {
+            width: 100%;
+            padding: 3px;
+            text-align: center;
+            border: 1px solid black;
+            border-radius: 4px;
+            box-sizing: border-box;
+            -moz-appearance: textfield;
+        }
+
+        .number-input input::-webkit-outer-spin-button,
+        .number-input input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .number-input .arrow {
+            position: absolute;
+            right: 5px;
+            width: 20px;
+            height: 60%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            font-size: 12px;
+        }
+
+        .number-input .arrow.up {
+            top: 0;
+            border-radius: 0 4px 0 0;
+        }
+
+        .number-input .arrow.down {
+            bottom: 0;
+            border-radius: 0 0 4px 0;
+        }
+    </style>
+
+<body>
+<h1>Edit</h1>
+<table id="strawalls" class="display fixed-width-table">
+    <tbody>
+        <tr>
+            <td>
+                <label for="name" style="padding-right: 14px">Name</label><input type="text" id="name" maxlength="50" class="form glow-on-focus" style="width: 300px" value="aa">
+            </td>
+            <td>
+                <label style="padding-right: 14px" for="numberField">Strawall dimension</label>
+                <div class="number-input">
+                    <input type="number" id="numberField" value="1920" min="50" max="1920" class="glow-on-focus">
+                    <div class="arrow up" onclick="changeValue(1)">&#9650;</div>
+                    <div class="arrow down" onclick="changeValue(-1)">&#9660;</div>
+                </div>
+                x
+                <div class="number-input">
+                    <input type="number" id="numberField" value="1080" min="50" max="1920" class="glow-on-focus">
+                    <div class="arrow up" onclick="changeValue(1)">&#9650;</div>
+                    <div class="arrow down" onclick="changeValue(-1)">&#9660;</div>
+                </div>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+
+<script>
+    function changeValue(delta) {
+        var input = document.getElementById('numberField');
+        var newValue = parseInt(input.value) + delta;
+
+        if (newValue >= parseInt(input.min) && newValue <= parseInt(input.max)) {
+            input.value = newValue;
+        }
+    }
+
+    document.getElementById('numberField').addEventListener('input', function() {
+        var value = this.value;
+        if (value < 50) this.value = 50;
+        if (value > 1920) this.value = 1920;
+    });
+</script>
+
+
+</body>
+</html>

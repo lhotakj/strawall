@@ -201,6 +201,12 @@ def activities_js():
 def user_strawall_list():
     return render_template('user_strawall_list.html', athlete_id=app.config.session_athlete_id)
 
+@app.route('/user/strawalls/edit/<guid>')
+@auth_route
+def user_strawall_edit(guid):
+    return render_template('user_strawall_edit.html', athlete_id=app.config.session_athlete_id)
+
+
 @app.route('/api/strawalls.json', methods=['GET', 'POST'])
 def api_strawalls():
     app.config.logger.info("api_strawalls()")
