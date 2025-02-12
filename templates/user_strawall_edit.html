@@ -10,12 +10,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/datatable.css') }}">
     <script src="{{ url_for('static', filename='datatables/datatables.min.js') }}"></script>
     <script src="https://kit.fontawesome.com/2e8577682b.js" crossorigin="anonymous"></script>
-</head>
     <style>
-
         .glow-on-focus {
-            width: 100%;
-            max-width: 300px;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 4px;
@@ -34,15 +30,15 @@
             border: 1px solid black;
             border-radius: 4px;
             padding: 3px;
-            padding-left:6px;
-            padding-right:6px;
-              }
+            padding-left: 6px;
+            padding-right: 6px;
+        }
 
         .number-input {
             position: relative;
             display: inline-block;
             width: 80px;
-            padding-right:3px;
+            padding-right: 3px;
         }
 
         .number-input input {
@@ -83,8 +79,23 @@
             bottom: 0;
             border-radius: 0 0 4px 0;
         }
-    </style>
 
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        iframe {
+            position: absolute;
+            top: 130px;
+            left: 20px;
+            overflow: auto; /* Ensure the iframe can show scrollbars if needed */
+            border: 1px solid black;
+            border-radius: 4px;
+
+        }
+    </style>
+</head>
 <body>
 <h1>Edit</h1>
 <table id="strawalls" class="display fixed-width-table">
@@ -94,41 +105,64 @@
                 <label for="name" style="padding-right: 14px">Name</label><input type="text" id="name" maxlength="50" class="form glow-on-focus" style="width: 300px" value="aa">
             </td>
             <td>
-                <label style="padding-right: 14px" for="numberField">Strawall dimension</label>
+                <label style="padding-right: 14px" for="strawall_width">Strawall dimension</label>
                 <div class="number-input">
-                    <input type="number" id="numberField" value="1920" min="50" max="1920" class="glow-on-focus">
-                    <div class="arrow up" onclick="changeValue(1)">&#9650;</div>
-                    <div class="arrow down" onclick="changeValue(-1)">&#9660;</div>
+                    <input type="number" id="strawall_width" value="1920" min="50" max="1920" class="glow-on-focus">
+                    <div class="arrow up" onclick="changeValue(1, 'strawall_width')">&#9650;</div>
+                    <div class="arrow down" onclick="changeValue(-1, 'strawall_width')">&#9660;</div>
                 </div>
                 x
                 <div class="number-input">
-                    <input type="number" id="numberField" value="1080" min="50" max="1920" class="glow-on-focus">
-                    <div class="arrow up" onclick="changeValue(1)">&#9650;</div>
-                    <div class="arrow down" onclick="changeValue(-1)">&#9660;</div>
+                    <input type="number" id="strawall_height" value="1080" min="50" max="1920" class="glow-on-focus">
+                    <div class="arrow up" onclick="changeValue(1, 'strawall_height')">&#9650;</div>
+                    <div class="arrow down" onclick="changeValue(-1, 'strawall_height')">&#9660;</div>
                 </div>
             </td>
         </tr>
     </tbody>
 </table>
 
+<iframe src="http://home:5000/stats_html" id="dynamicIframe"></iframe>
 
 <script>
-    function changeValue(delta) {
-        var input = document.getElementById('numberField');
+    function adjustIframeSize() {
+        var iframe = document.getElementById('dynamicIframe');
+        var width = parseInt(document.getElementById('strawall_width').value);
+        var height = parseInt(document.getElementById('strawall_height').value);
+
+        // Set the iframe size according to the values in the inputs
+        iframe.style.width = width + 'px';
+        iframe.style.height = height + 'px';
+
+        // Toggle scrollbars based on dimensions
+        if (width < 800 || height < 600) {
+            iframe.style.overflow = 'auto';
+        } else {
+            iframe.style.overflow = 'hidden';
+        }
+    }
+
+    // Update iframe size on window resize
+    window.addEventListener('resize', adjustIframeSize);
+
+    // Update iframe size when input values change
+    document.getElementById('strawall_width').addEventListener('input', adjustIframeSize);
+    document.getElementById('strawall_height').addEventListener('input', adjustIframeSize);
+
+    adjustIframeSize();
+</script>
+
+<script>
+    function changeValue(delta, elementId) {
+        var input = document.getElementById(elementId);
         var newValue = parseInt(input.value) + delta;
 
         if (newValue >= parseInt(input.min) && newValue <= parseInt(input.max)) {
             input.value = newValue;
+            adjustIframeSize(); // Adjust iframe size after changing the value
         }
     }
-
-    document.getElementById('numberField').addEventListener('input', function() {
-        var value = this.value;
-        if (value < 50) this.value = 50;
-        if (value > 1920) this.value = 1920;
-    });
 </script>
-
 
 </body>
 </html>
