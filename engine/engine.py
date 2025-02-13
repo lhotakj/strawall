@@ -137,7 +137,7 @@ class Engine:
         with open(pwd + "/page.html", "r") as f:
             self.html_data: str = f.read()
 
-        widget_goal = self.load_widget_template("ytd_ride","Year to now", "1", "0%", top="0%", width="40%", height="20%")
+        widget_goal = self.load_widget_template("ytd_ride","Year to now", "1", "0%", top="0%", width="20%", height="20%")
         widget_stats: str = self.load_widget_template("ride_stats","Stats", "2", "70%", top="30%", width="40%", height="20%")
 
         path: str = ""
@@ -197,8 +197,8 @@ class Engine:
     #
     #     #self.app.config.logger.info(html_data)
 
-    def render(self):
-        self.render_html_new()
+    def render(self, guid):
+        self.render_html_new(guid)
 
         # Add --local-file-access to the options
         options = ['--quality', '100',

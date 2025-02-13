@@ -310,6 +310,26 @@
 <script>
     $(document).ready(function() {
 
+        function sendPlacementToServer() {
+            var position = {
+                left: $(this).css('left'),
+                top: $(this).css('top'),
+                width: $(this).css('width'),
+                height: $(this).css('height'),
+                left_percent: parseInt($(this).css('left').replaceAll("px","")) / window.strawallWidth,
+                top_percent: parseInt($(this).css('top').replaceAll("px","")) / window.strawallHeight,
+                width_percent: parseInt($(this).css('width').replaceAll("px","")) / window.strawallWidth,
+                height_percent: parseInt($(this).css('height').replaceAll("px",""))  / window.strawallHeight
+            };
+
+            // Convert the position to JSON
+            var positionJSON = JSON.stringify(position);
+            console.log(positionJSON);
+
+            // You can send positionJSON to your server using an AJAX request
+            // $.post('your-server-endpoint', { position: positionJSON });
+        }
+
         window.pageMode = ""
         window.strawallWidth = {{ canvas_width }}
         window.strawallHeight = {{ canvas_height }}
@@ -331,12 +351,14 @@
         var isResizing = false;
         var originalX, originalY;
         var offsetX, offsetY;
+        var $widget = $('.widget');
         var $widgetBar = $('.widget-bar');
         var $resizeHandle = $('.resize-handle');
 
         $widgetBar.on('mousedown', function(e) {
             window.widgetDragging = $(this).parent();
             isDragging = true;
+            isResizing = false;
             originalX = e.pageX;
             originalY = e.pageY;
             offsetX = window.widgetDragging.offset().left;
@@ -346,6 +368,7 @@
         $resizeHandle.on('mousedown', function(e) {
             window.widgetResizing = $(this).parent();
             isResizing = true;
+            isDragging = false;
             originalX = e.pageX;
             originalY = e.pageY;
             offsetX = window.widgetResizing.width();
@@ -353,7 +376,7 @@
             e.preventDefault(); // Prevent text selection
         });
 
-        $('.widget').on('mousemove', function(e) {
+        $widget.on('mousemove', function(e) {
             if (isDragging) {
                 var newX = offsetX + (e.pageX - originalX);
                 var newY = offsetY + (e.pageY - originalY);
@@ -373,7 +396,11 @@
                     left: newX + 'px',
                     top: newY + 'px'
                 });
-            } else if (isResizing) {
+            }
+        });
+
+        $resizeHandle.on('mousemove', function(e) {
+            if (isResizing) {
                 var newWidth = offsetX + (e.pageX - originalX);
                 var newHeight = offsetY + (e.pageY - originalY);
 
@@ -388,32 +415,19 @@
             }
         });
 
-    $('.widget').on('mouseup', function() {
-        if (isDragging || isResizing) {
-            isDragging = false;
-            isResizing = false;
-            window.widgetResizing = null;
-            window.widgetDragging = null;
+        $widgetBar.on('mouseup', function() {
+            if (isDragging) {
+                isDragging = false;
+                sendPlacementToServer();
+            }
+        });
 
-            var position = {
-                left: $(this).css('left'),
-                top: $(this).css('top'),
-                width: $(this).css('width'),
-                height: $(this).css('height'),
-                left_percent: parseInt($(this).css('left').replaceAll("px","")) / window.strawallWidth,
-                top_percent: parseInt($(this).css('top').replaceAll("px","")) / window.strawallHeight,
-                width_percent: parseInt($(this).css('width').replaceAll("px","")) / window.strawallWidth,
-                height_percent: parseInt($(this).css('height').replaceAll("px",""))  / window.strawallHeight
-            };
-
-            // Convert the position to JSON
-            var positionJSON = JSON.stringify(position);
-            console.log(positionJSON);
-
-            // You can send positionJSON to your server using an AJAX request
-            // $.post('your-server-endpoint', { position: positionJSON });
-        }
-    });
+        $resizeHandle.on('mouseup', function() {
+            if (isResizing) {
+                isResizing = false;
+                sendPlacementToServer();
+            }
+        });
 
 
 });

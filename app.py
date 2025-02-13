@@ -129,13 +129,13 @@ def page_not_found(e):
 @auth_route
 def stats_image():
     engine = Engine(app)
-    return engine.render()
+    return engine.render('ae370ca9e79911ef959dbee291350640')
 
 @app.route('/stats_html')
 @auth_route
 def stats_html():
     engine = Engine(app)
-    engine.render_html(RenderMode.HTML)
+    engine.render_html_new('ae370ca9e79911ef959dbee291350640',RenderMode.HTML)
     return flask.Response(engine.html_data, mimetype='text/html')
 
 @app.route('/user/strawall/edit/<guid>')
