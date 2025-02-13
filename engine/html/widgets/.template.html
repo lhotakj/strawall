@@ -1,0 +1,22 @@
+<div id="{{ widget_id }}"
+     style="
+     z-index: 100;
+     position: absolute;
+     left: {{ widget_left }};
+     top: {{ widget_top }};
+     width: {{ widget_width }};
+     height: {{ widget_height }};"
+class="widget">
+
+    <div class="widget-bar">
+        <span class="widget-bar-text">{{ widget_name }}</span>
+        <div class="widget-bar-close-container">
+            <div class="widget-bar-close-container-button">x</div>
+        </div>
+    </div>
+
+    {{ widget_content }}
+
+    <div class="resize-handle"></div>
+
+</div>

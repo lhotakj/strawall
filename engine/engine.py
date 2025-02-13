@@ -51,13 +51,20 @@ class Engine:
                 "achieved": round(float(goal_yord["stat"]) / float(goal_yord["plan"]) * 1000) / 10,
                 "activity_type": activity_type}
 
-    def load_widget_template(self, widget_type):
+    def load_widget_template(self, widget_type, widget_name, widget_id, left, top, width, height):
         pwd: str = os.path.join(Path.cwd(), "engine", "html")
-        file: str = ""
+        template: str = ""
         html_data: str = ""
+
+        # read .template file
+        with open(pwd + "/widgets/.template.html", "r") as f:
+            template = f.read()
+
+        file: str = ""
+
         data = {}
         if widget_type == "ytd_ride":
-            file = "widgets/ytd.html"
+            file = "widgets/ytd-simple.html"
             data = self.widget_distance_elevation(activity_type="ride",
                                                   distance=strava_goals.StatsType.yord,
                                                   elevation=strava_goals.StatsType.yore)
@@ -66,11 +73,34 @@ class Engine:
             data = self.widget_distance_elevation(activity_type="ride",
                                                   distance=strava_goals.StatsType.yord,
                                                   elevation=strava_goals.StatsType.yore)
+        print('== data ==')
+        print(data)
+        print('== data ==')
+        print('== reading ----' + pwd + "/" + file)
+
         with open(pwd + "/" + file, "r") as f:
-            html_data: str = f.read()
+            html_data = f.read()
         for key, value in data.items():
             html_data = html_data.replace('{{ ' + key + ' }}', str(value))
-        return html_data
+
+        print('== content html_data ----')
+        print(html_data)
+        print('== content html_data ----')
+
+        # place the html to the template, there are
+        template = template.replace('{{ widget_left }}', str(left))
+        template = template.replace('{{ widget_top }}', str(top))
+        template = template.replace('{{ widget_width }}', str(width))
+        template = template.replace('{{ widget_height }}', str(height))
+        template = template.replace('{{ widget_id }}', str(widget_id))
+        template = template.replace('{{ widget_name }}', str(widget_name))
+        template = template.replace('{{ widget_content }}', str(html_data))
+
+        print('load_widget_template NEW ----')
+        print(template)
+        print('load_widget_template NEW ----')
+
+        return template
 
     # TODO next steps:
     # - move widgets to widgets
@@ -98,8 +128,8 @@ class Engine:
         # Serve the image
         return send_file(img_io, mimetype='image/png')
 
-    def render_html(self, mode: RenderMode = RenderMode.IMAGE):
-        self.app.config.logger.info("render()")
+    def render_html_new(self, guid: str, mode: RenderMode = RenderMode.IMAGE):
+        self.app.config.logger.info("render_html_new!")
         # Define the path to the HTML files
         pwd: str = os.path.join(Path.cwd(), "engine", "html")
 
@@ -107,13 +137,13 @@ class Engine:
         with open(pwd + "/page.html", "r") as f:
             self.html_data: str = f.read()
 
-        widget_goal = self.load_widget_template("ytd_ride")
-        widget_stats: str = self.load_widget_template("ride_stats")
+        widget_goal = self.load_widget_template("ytd_ride","Year to now", "1", "0%", top="0%", width="40%", height="20%")
+        widget_stats: str = self.load_widget_template("ride_stats","Stats", "2", "70%", top="30%", width="40%", height="20%")
 
         path: str = ""
         if mode == RenderMode.IMAGE:
             path = pwd
-        elif mode == RenderMode.HTML:
+        elif mode in (RenderMode.HTML, RenderMode.EDIT):
             path = "/engine"
 
         # Replace the paths in the HTML data
@@ -132,8 +162,43 @@ class Engine:
 
         #self.app.config.logger.info(html_data)
 
+
+    # def render_html(self, mode: RenderMode = RenderMode.IMAGE):
+    #     self.app.config.logger.info("render()")
+    #     # Define the path to the HTML files
+    #     pwd: str = os.path.join(Path.cwd(), "engine", "html")
+    #
+    #     # Read the input file in read mode
+    #     with open(pwd + "/page.html", "r") as f:
+    #         self.html_data: str = f.read()
+    #
+    #     widget_goal = self.load_widget_template("ytd_ride")
+    #     widget_stats: str = self.load_widget_template("ride_stats")
+    #
+    #     path: str = ""
+    #     if mode == RenderMode.IMAGE:
+    #         path = pwd
+    #     elif mode == RenderMode.HTML:
+    #         path = "/engine"
+    #
+    #     # Replace the paths in the HTML data
+    #     self.html_data = self.html_data.replace('href="./', 'href="' + path + '/')
+    #     self.html_data = self.html_data.replace('src="./', 'src="' + path + '/')
+    #     self.html_data = self.html_data.replace('url(./', 'url(' + path + '/')
+    #
+    #     self.html_data =self. html_data.replace('<widget id="widget-goal.html"></widget>', widget_goal)
+    #     self.html_data = self.html_data.replace('<widget id="widget-stats.html"></widget>', widget_stats)
+    #     self.html_data = self.html_data.replace('{{ widget_font_color }}', self.WIDGET_FONT_COLOR)
+    #     self.html_data = self.html_data.replace('{{ widget_font_color_highlight }}', self.WIDGET_FONT_COLOR_HIGHLIGHT)
+    #     self.html_data = self.html_data.replace('{{ widget_font_color_stroke }}', self.WIDGET_FONT_COLOR_STROKE)
+    #     self.html_data = self.html_data.replace('{{ widget_font_stroke_width }}', self.WIDGET_FONT_STROKE_WIDTH)
+    #     self.html_data = self.html_data.replace('{{ canvas_width }}', str(self.CANVAS_WIDTH))
+    #     self.html_data = self.html_data.replace('{{ canvas_height }}', str(self.CANVAS_HEIGHT))
+    #
+    #     #self.app.config.logger.info(html_data)
+
     def render(self):
-        self.render_html()
+        self.render_html_new()
 
         # Add --local-file-access to the options
         options = ['--quality', '100',

@@ -1,0 +1,60 @@
+<canvas id="gaugeCanvas" width="400" height="400"
+        style="z-index: 100;"></canvas>
+<script>
+    window.addEventListener('load', function () {
+
+        var canvas = document.getElementById('gaugeCanvas');
+        var context = canvas.getContext('2d');
+
+        context.imageSmoothingEnabled = true;
+
+        var centerX = canvas.width / 2;
+        var centerY = canvas.height / 2;
+        var radius = 150;
+
+        // Draw the gauge background
+        context.beginPath();
+        context.arc(centerX, centerY, radius, Math.PI, 2 * Math.PI);
+        context.lineWidth = 40;
+        context.strokeStyle = '#ddd';
+        context.globalAlpha = 0.5;
+        context.stroke();
+        context.globalAlpha = 1.0;
+
+        // Draw the gauge foreground
+        var currentValue = {{ achieved }}; // Change this value to update the gauge
+        var endAngle = Math.PI + (currentValue / 100) * Math.PI;
+        context.beginPath();
+        context.arc(centerX, centerY, radius, Math.PI, endAngle);
+        context.lineWidth = 40;
+        context.strokeStyle = '{{ widget_font_color }}';
+        context.stroke();
+
+        // Draw the center text
+        var textValueTop = canvas.height * 0.365;
+        context.fillStyle = '{{ widget_font_color }}';
+        context.font = '53px Open Sans';
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        // Stroke
+        context.strokeStyle = '{{ widget_font_color_stroke }}';
+        context.lineWidth = {{ widget_font_stroke_width }};
+        context.strokeText(currentValue + '%', centerX, textValueTop);
+        context.fillText(currentValue + '%', centerX, textValueTop);
+
+
+        // Draw the center text
+        var textDescriptionTop = canvas.height * 0.48;
+        context.fillStyle = '{{ widget_font_color }}';
+        context.font = '25px Open Sans';
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        // Stroke
+        context.strokeStyle = '{{ widget_font_color_stroke }}';
+        context.lineWidth = {{ widget_font_stroke_width }};
+        context.strokeText('yearly {{ activity_type }} goal', centerX, textDescriptionTop);
+        context.fillText('yearly {{ activity_type }} goal', centerX, textDescriptionTop);
+
+    });
+
+</script>

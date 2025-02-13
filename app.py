@@ -138,6 +138,13 @@ def stats_html():
     engine.render_html(RenderMode.HTML)
     return flask.Response(engine.html_data, mimetype='text/html')
 
+@app.route('/user/strawall/edit/<guid>')
+@auth_route
+def strawall_edit(guid: str):
+    engine = Engine(app)
+    engine.render_html_new(guid, RenderMode.EDIT)
+    return flask.Response(engine.html_data, mimetype='text/html')
+
 
 @app.route('/authorize_strava')
 def authorize_strava():
@@ -196,15 +203,16 @@ def activities_js():
     return render_template('activities_js.html')
 
 
-@app.route('/user_strawall_list')
+@app.route('/user/strawalls/list')
 @auth_route
 def user_strawall_list():
     return render_template('user_strawall_list.html', athlete_id=app.config.session_athlete_id)
 
+# image edit screen
 @app.route('/user/strawalls/edit/<guid>')
 @auth_route
 def user_strawall_edit(guid):
-    return render_template('user_strawall_edit.html', athlete_id=app.config.session_athlete_id)
+    return render_template('user_strawall_edit.html', athlete_id=app.config.session_athlete_id, guid=guid)
 
 
 @app.route('/api/strawalls.json', methods=['GET', 'POST'])
