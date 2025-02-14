@@ -310,6 +310,8 @@
 <script>
     $(document).ready(function() {
 
+        var widgets_json = {{ widgets_json }}
+
         function sendPlacementToServer() {
             var position = {
                 left: $(this).css('left'),

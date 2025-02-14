@@ -5,8 +5,8 @@
 {% block content %}
     <section class="hero">
 
-        <a href="{{ url_for('stats_image') }}">View Stats Image</a><br>
-        <a href="{{ url_for('stats_html') }}">Stats html</a><br>
+        <a href="{{ url_for('stats_image', athlete_id='711108', guid='ae370ca9e79911ef959dbee291350640') }}">View Stats Image</a><br>
+        <a href="{{ url_for('stats_html', guid='ae370ca9e79911ef959dbee291350640') }}">Stats html</a><br>
 
         {{ user }}
 

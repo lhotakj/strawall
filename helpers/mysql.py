@@ -137,7 +137,7 @@ class Database(interface_database.Database):
             cursor = self.cnx.cursor()
             sql: str = "SELECT strawall_id, strawall_guid, name, width, height, active FROM strawalls WHERE athlete_id = " + str(
                 athlete_id) + " ORDER BY name ASC"
-            self.app.config.logger.info("loading: " + sql)
+            #self.app.config.logger.info("query: " + sql)
             cursor.execute(sql)
             strawalls: list = []
             for row in cursor.fetchall():
@@ -154,6 +154,35 @@ class Database(interface_database.Database):
             return strawalls
         except Exception as ex:
             self.app.config.logger.exception("Failed to load strawalls." + str(ex))
+            return []
+
+    def load_widgets_for_strawall(self, strawall_id) -> list:
+        # self.app.logger.info("loading widgets for strawall: " + str(strawall_id))
+        if not self.connect(): return []
+        try:
+            cursor = self.cnx.cursor()
+            sql: str = "SELECT `strawall_widget_id`, `name`, `width`, `height`, `top`, `left`, `type`, `props`, `active` FROM widgets WHERE strawall_guid = '" + str(strawall_id) + "' ORDER BY strawall_widget_id ASC"
+            #self.app.config.logger.info("query: " + sql)
+            cursor.execute(sql)
+            strawalls_widgets: list = []
+            for row in cursor.fetchall():
+                print(row)
+                strawalls_widgets.append({
+                    "strawall_widget_id": row[0],
+                    "name": row[1],
+                    "width": row[2],
+                    "height": row[3],
+                    "top": row[4],
+                    "left": row[5],
+                    "type": row[6],
+                    "props": row[7],
+                    "active": row[8]
+                })
+            cursor.close()
+            self.cnx.close()
+            return strawalls_widgets
+        except Exception as ex:
+            self.app.config.logger.exception("Failed to load strawall widget." + str(ex))
             return []
 
 
@@ -203,7 +232,7 @@ class Database(interface_database.Database):
                         WHERE
                             gp.athlete_id = %d AND gp.plan is not null
                         """ % athlete_id
-            self.app.config.logger.info("load sql: " + sql)
+            #self.app.config.logger.info("query sql: " + sql)
             cursor.execute(sql)
 
             column_names = [desc[0] for desc in cursor.description]

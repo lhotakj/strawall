@@ -1,11 +1,16 @@
 import io
+import json
 import os
 import subprocess
+from decimal import Decimal
 from pathlib import Path
 from unicodedata import decimal
 
 from helpers.strava_goals import StatsType
 from .render_mode import RenderMode
+
+import json
+from decimal import Decimal
 
 
 from PIL import Image, ImageDraw, ImageFont
@@ -26,10 +31,12 @@ class Engine:
 
     app: Flask
     html_data: str
+    mode: RenderMode
 
-    def __init__(self, app: Flask):
+    def __init__(self, app: Flask, mode: RenderMode):
         self.app = app
         self.db = database.Database(app)
+        self.mode = mode
         self.app.config.logger.info("Engine.__init__()")
         self.app.config.logger.info(app.config.db)
         pass
@@ -56,8 +63,14 @@ class Engine:
         template: str = ""
         html_data: str = ""
 
+        template_file: str
+        if self.mode == RenderMode.EDIT:
+           template_file = "/widgets/.template-edit.html"
+        else:
+            template_file = "/widgets/.template-view.html"
+
         # read .template file
-        with open(pwd + "/widgets/.template.html", "r") as f:
+        with open(pwd + template_file, "r") as f:
             template = f.read()
 
         file: str = ""
@@ -83,9 +96,6 @@ class Engine:
         for key, value in data.items():
             html_data = html_data.replace('{{ ' + key + ' }}', str(value))
 
-        print('== content html_data ----')
-        print(html_data)
-        print('== content html_data ----')
 
         # place the html to the template, there are
         template = template.replace('{{ widget_left }}', str(left))
@@ -95,10 +105,6 @@ class Engine:
         template = template.replace('{{ widget_id }}', str(widget_id))
         template = template.replace('{{ widget_name }}', str(widget_name))
         template = template.replace('{{ widget_content }}', str(html_data))
-
-        print('load_widget_template NEW ----')
-        print(template)
-        print('load_widget_template NEW ----')
 
         return template
 
@@ -128,7 +134,16 @@ class Engine:
         # Serve the image
         return send_file(img_io, mimetype='image/png')
 
-    def render_html_new(self, guid: str, mode: RenderMode = RenderMode.IMAGE):
+
+    def decimal_to_float(self,obj):
+        if isinstance(obj, list):
+            return [self.decimal_to_float(item) for item in obj]
+        elif isinstance(obj, dict):
+            return {k: float(v) if isinstance(v, Decimal) else self.decimal_to_float(v) for k, v in obj.items()}
+        else:
+            return obj
+
+    def render_html_new(self, guid: str):
         self.app.config.logger.info("render_html_new!")
         # Define the path to the HTML files
         pwd: str = os.path.join(Path.cwd(), "engine", "html")
@@ -137,14 +152,23 @@ class Engine:
         with open(pwd + "/page.html", "r") as f:
             self.html_data: str = f.read()
 
+        self.app.config.logger.info("-- widgets --")
+        widgets_dict = self.db.load_widgets_for_strawall(guid)
+        widgets_dict_float = self.decimal_to_float(widgets_dict)
+        widgets_json: str = json.dumps(widgets_dict_float, indent=4)
+        self.app.config.logger.info(widgets_json)
+        self.app.config.logger.info("-- widgets --")
+
         widget_goal = self.load_widget_template("ytd_ride","Year to now", "1", "0%", top="0%", width="20%", height="20%")
         widget_stats: str = self.load_widget_template("ride_stats","Stats", "2", "70%", top="30%", width="40%", height="20%")
 
         path: str = ""
-        if mode == RenderMode.IMAGE:
+        if self.mode == RenderMode.IMAGE:
             path = pwd
-        elif mode in (RenderMode.HTML, RenderMode.EDIT):
+        elif self.mode in (RenderMode.HTML, RenderMode.EDIT):
             path = "/engine"
+
+        self.html_data = self.html_data.replace('{{ widgets_json }}', widgets_json)
 
         # Replace the paths in the HTML data
         self.html_data = self.html_data.replace('href="./', 'href="' + path + '/')
@@ -159,6 +183,10 @@ class Engine:
         self.html_data = self.html_data.replace('{{ widget_font_stroke_width }}', self.WIDGET_FONT_STROKE_WIDTH)
         self.html_data = self.html_data.replace('{{ canvas_width }}', str(self.CANVAS_WIDTH))
         self.html_data = self.html_data.replace('{{ canvas_height }}', str(self.CANVAS_HEIGHT))
+
+        with open("/tmp/tmp.html", "w") as f:
+            f.write(self.html_data)
+
 
         #self.app.config.logger.info(html_data)
 

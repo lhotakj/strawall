@@ -125,24 +125,24 @@ def page_not_found(e):
     return render_template('404.html'), 404
 
 
-@app.route('/stats.png')
+@app.route('/user/<athlete_id>/<guid>')
 @auth_route
-def stats_image():
-    engine = Engine(app)
+def stats_image(athlete_id: str, guid: str):
+    engine = Engine(app, RenderMode.IMAGE)
     return engine.render('ae370ca9e79911ef959dbee291350640')
 
-@app.route('/stats_html')
+@app.route('/user/strawall/view/<guid>')
 @auth_route
-def stats_html():
-    engine = Engine(app)
-    engine.render_html_new('ae370ca9e79911ef959dbee291350640',RenderMode.HTML)
+def stats_html(guid: str):
+    engine = Engine(app,RenderMode.HTML)
+    engine.render_html_new(guid)
     return flask.Response(engine.html_data, mimetype='text/html')
 
 @app.route('/user/strawall/edit/<guid>')
 @auth_route
 def strawall_edit(guid: str):
-    engine = Engine(app)
-    engine.render_html_new(guid, RenderMode.EDIT)
+    engine = Engine(app, RenderMode.EDIT)
+    engine.render_html_new(guid)
     return flask.Response(engine.html_data, mimetype='text/html')
 
 
